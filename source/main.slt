@@ -1,0 +1,6 @@
+use lexer;
+
+void main() {
+    list(Token) tokens = tokenize("int x = 42;");
+    print(token_count(tokens));
+}

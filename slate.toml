@@ -1,0 +1,8 @@
+[project]
+name = "cli"
+version = "0.1.0"
+description = ""
+entry = "source/main.slt"
+
+[deps]
+slate = { git = "https://github.com/slatelang-dev/slate" }
