@@ -1,6 +1,13 @@
-use lexer;
+use slate;
 
 void main() {
-    list(Token) tokens = tokenize("int x = 42;");
-    print(token_count(tokens));
+    string source = "void main() { int x = 42; int x = 5; }";
+    ParseResult result = parse(source);
+    if result.ok == false {
+        print(red("Parse error: ") + result.error);
+        return;
+    }
+    AnalysisResult ar = analyse(result.node, "test.slt");
+    string output = render_all(ar.errors, ar.warnings, source);
+    print(output);
 }
