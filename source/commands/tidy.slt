@@ -1,0 +1,5 @@
+module tidy;
+
+void cmd_tidy(list(string) args) {
+    print("slate: 'tidy' is not yet available. run 'slate help' for usage.");
+}

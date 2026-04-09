@@ -1,0 +1,5 @@
+module docs;
+
+void cmd_docs(list(string) args) {
+    print("slate: 'docs' is not yet available. run 'slate help' for usage.");
+}

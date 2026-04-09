@@ -1,0 +1,5 @@
+module info;
+
+void cmd_info(list(string) args) {
+    print("slate: 'info' is not yet available. run 'slate help' for usage.");
+}

@@ -1,0 +1,17 @@
+module commands;
+
+use run;
+use check;
+use build;
+use test;
+use debug;
+use tidy;
+use new;
+use add;
+use remove;
+use sync;
+use update;
+use docs;
+use info;
+use help;
+use clean;

@@ -1,0 +1,5 @@
+module update;
+
+void cmd_update(list(string) args) {
+    print("slate: 'update' is not yet available. run 'slate help' for usage.");
+}

@@ -1,0 +1,5 @@
+module test;
+
+void cmd_test(list(string) args) {
+    print("slate: 'test' is not yet available. run 'slate help' for usage.");
+}

@@ -1,0 +1,26 @@
+module help;
+
+use slate;
+
+void cmd_help(list(string) args) {
+    print(bold_slate("slate") + " — a statically typed language");
+    print("");
+    print(bold("usage:") + " slate <command> [args]");
+    print("");
+    print(bold("commands:"));
+    print("  " + bold_slate("run <file>") + "      run a slate file");
+    print("  " + bold_slate("check <file>") + "    check a file for errors without running");
+    print("  " + bold_slate("new <name>") + "      create a new slate project");
+    print("  " + bold_slate("test") + "            run tests (coming soon)");
+    print("  " + bold_slate("build") + "           compile to a native binary (coming soon)");
+    print("  " + bold_slate("clean") + "           remove build artifacts");
+    print("  " + bold_slate("add <dep>") + "       add a dependency (coming soon)");
+    print("  " + bold_slate("remove <dep>") + "    remove a dependency (coming soon)");
+    print("  " + bold_slate("sync") + "            sync dependencies (coming soon)");
+    print("  " + bold_slate("update") + "          update slate itself (coming soon)");
+    print("  " + bold_slate("tidy") + "            format and tidy source (coming soon)");
+    print("  " + bold_slate("docs") + "            open documentation (coming soon)");
+    print("  " + bold_slate("info") + "            show project info (coming soon)");
+    print("  " + bold_slate("debug <file>") + "    run with debug output (coming soon)");
+    print("  " + bold_slate("help") + "            show this message");
+}

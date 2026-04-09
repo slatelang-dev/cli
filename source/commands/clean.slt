@@ -1,0 +1,10 @@
+module clean;
+
+void cmd_clean(list(string) args) {
+    if file("builds/").exists() {
+        run("rm", "-rf", "builds/");
+        print("cleaned builds/");
+    } else {
+        print("nothing to clean.");
+    }
+}

@@ -1,0 +1,5 @@
+module build;
+
+void cmd_build(list(string) args) {
+    print("slate: 'build' is not yet available. run 'slate help' for usage.");
+}

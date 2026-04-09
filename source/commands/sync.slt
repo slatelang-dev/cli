@@ -1,0 +1,5 @@
+module sync;
+
+void cmd_sync(list(string) args) {
+    print("slate: 'sync' is not yet available. run 'slate help' for usage.");
+}

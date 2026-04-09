@@ -1,0 +1,25 @@
+module check;
+
+use slate;
+
+void cmd_check(list(string) args) {
+    if args.len() < 2 {
+        print("slate check: no file given.");
+        print("usage: slate check <file>");
+        return;
+    }
+    string path = args.get(1);
+    string source = file(path).read();
+    ParseResult result = parse(source);
+    if result.ok == false {
+        print(red("parse error: ") + result.error);
+        return;
+    }
+    AnalysisResult ar = analyse(result.node, path);
+    string output = render_all(ar.errors, ar.warnings, source);
+    if output.len() > 0 {
+        print(output);
+        return;
+    }
+    print(green("no errors found."));
+}

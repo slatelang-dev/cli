@@ -1,0 +1,5 @@
+module add;
+
+void cmd_add(list(string) args) {
+    print("slate: 'add' is not yet available. run 'slate help' for usage.");
+}

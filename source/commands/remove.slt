@@ -1,0 +1,5 @@
+module remove;
+
+void cmd_remove(list(string) args) {
+    print("slate: 'remove' is not yet available. run 'slate help' for usage.");
+}
