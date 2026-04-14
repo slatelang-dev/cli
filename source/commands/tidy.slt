@@ -1,5 +1,37 @@
 module tidy;
 
+use slate;
+
 void cmd_tidy(list(string) args) {
-    print("slate: 'tidy' is not yet available. run 'slate help' for usage.");
+    if args.len() < 2 {
+        print("slate tidy: no file given.");
+        print("usage: slate tidy <file>");
+        return;
+    }
+    string path = args.get(1);
+    if file(path).exists() == false {
+        print(red("error") + ": file not found: " + bold_slate(path));
+        return;
+    }
+
+    string source = file(path).read();
+    ParseResult result = parse(source);
+    if result.ok == false {
+        print(red("parse error") + ": " + result.error);
+        return;
+    }
+
+    AnalysisResult ar = analyse(result.node, path);
+
+    if ar.warnings.len() == 0 {
+        print(bold_green("✓") + " " + bold_slate(path) + " looks good");
+        return;
+    }
+
+    print(bold_slate("slate") + " tidy " + bold_slate(path));
+    print("");
+    string output = render_warnings(ar.warnings, source);
+    print(output);
+    print(bold_yellow(string(ar.warnings.len()) + " suggestion(s)"));
+    print(bold("note") + ": formatting is not yet available — coming in 0.3.0");
 }

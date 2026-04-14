@@ -3,24 +3,130 @@ module help;
 use slate;
 
 void cmd_help(list(string) args) {
+    if args.len() >= 2 {
+        string topic = args.get(1);
+
+        if topic == "run" {
+            print(bold("slate run") + " — run a Slate file");
+            print("usage: slate run <file>");
+            return;
+        }
+        if topic == "check" {
+            print(bold("slate check") + " — parse and type check a file");
+            print("usage: slate check <file>");
+            return;
+        }
+        if topic == "build" {
+            print(bold("slate build") + " — compile to a native binary");
+            print("usage: slate build");
+            return;
+        }
+        if topic == "test" {
+            print(bold("slate test") + " — run #T test annotations");
+            print("usage: slate test <file>");
+            return;
+        }
+        if topic == "debug" {
+            print(bold("slate debug") + " — run with debug output");
+            print("usage: slate debug <file> [level]");
+            print("levels:");
+            print("  1   errors only");
+            print("  2   errors + warnings");
+            print("  3   + scope changes (coming 0.3.0)");
+            print("  4   + every expression (coming 0.3.0)");
+            print("  5   everything (coming 0.3.0)");
+            return;
+        }
+        if topic == "tidy" {
+            print(bold("slate tidy") + " — format and lint a file");
+            print("usage: slate tidy <file>");
+            return;
+        }
+        if topic == "new" {
+            print(bold("slate new") + " — scaffold a new project");
+            print("usage: slate new <name>");
+            return;
+        }
+        if topic == "init" {
+            print(bold("slate init") + " — initialize current directory as a Slate project");
+            print("usage: slate init [name]");
+            return;
+        }
+        if topic == "create" {
+            print(bold("slate create") + " — create a .slt file or directory");
+            print("usage: slate create <path.slt>");
+            print("       slate create <path/>");
+            return;
+        }
+        if topic == "add" {
+            print(bold("slate add") + " — add a git dependency");
+            print("usage: slate add <git-url>");
+            return;
+        }
+        if topic == "remove" {
+            print(bold("slate remove") + " — remove a dependency");
+            print("usage: slate remove <name>");
+            return;
+        }
+        if topic == "sync" {
+            print(bold("slate sync") + " — sync dependencies from slate.toml");
+            print("usage: slate sync");
+            return;
+        }
+        if topic == "update" {
+            print(bold("slate update") + " — update Slate");
+            print("usage: slate update");
+            print("note: not yet available");
+            return;
+        }
+        if topic == "docs" {
+            print(bold("slate docs") + " — open documentation");
+            print("usage: slate docs");
+            print("       slate docs <topic>");
+            return;
+        }
+        if topic == "info" {
+            print(bold("slate info") + " — show project info");
+            print("usage: slate info");
+            return;
+        }
+        if topic == "clean" {
+            print(bold("slate clean") + " — remove build artifacts");
+            print("usage: slate clean");
+            return;
+        }
+
+        print(red("unknown command") + ": " + topic);
+        print("run " + bold_slate("slate help") + " to see all commands");
+        return;
+    }
+
     print(bold_slate("slate") + " — a statically typed language");
     print("");
     print(bold("usage:") + " slate <command> [args]");
     print("");
-    print(bold("commands:"));
-    print("  " + bold_slate("run <file>") + "      run a slate file");
-    print("  " + bold_slate("check <file>") + "    check a file for errors without running");
-    print("  " + bold_slate("new <name>") + "      create a new slate project");
-    print("  " + bold_slate("test") + "            run tests (coming soon)");
-    print("  " + bold_slate("build") + "           compile to a native binary (coming soon)");
-    print("  " + bold_slate("clean") + "           remove build artifacts");
-    print("  " + bold_slate("add <dep>") + "       add a dependency (coming soon)");
-    print("  " + bold_slate("remove <dep>") + "    remove a dependency (coming soon)");
-    print("  " + bold_slate("sync") + "            sync dependencies (coming soon)");
-    print("  " + bold_slate("update") + "          update slate itself (coming soon)");
-    print("  " + bold_slate("tidy") + "            format and tidy source (coming soon)");
-    print("  " + bold_slate("docs") + "            open documentation (coming soon)");
-    print("  " + bold_slate("info") + "            show project info (coming soon)");
-    print("  " + bold_slate("debug <file>") + "    run with debug output (coming soon)");
-    print("  " + bold_slate("help") + "            show this message");
+    print(bold("project:"));
+    print("  new <name>       scaffold a new project");
+    print("  init [name]      initialize current directory");
+    print("  create <path>    create a .slt file or directory");
+    print("  info             show project info");
+    print("");
+    print(bold("development:"));
+    print("  run <file>       run a Slate file");
+    print("  check <file>     parse and type check");
+    print("  build            compile to native binary");
+    print("  test <file>      run #T test annotations");
+    print("  debug <file>     run with debug output");
+    print("  tidy <file>      format and lint");
+    print("");
+    print(bold("dependencies:"));
+    print("  add <url>        add a git dependency");
+    print("  remove <name>    remove a dependency");
+    print("  sync             sync dependencies");
+    print("  update           update Slate");
+    print("");
+    print(bold("other:"));
+    print("  docs [topic]     open documentation");
+    print("  clean            remove build artifacts");
+    print("  help [command]   show help");
 }

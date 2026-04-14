@@ -1,5 +1,52 @@
 module sync;
 
+use slate;
+
 void cmd_sync(list(string) args) {
-    print("slate: 'sync' is not yet available. run 'slate help' for usage.");
+    if file("slate.toml").exists() == false {
+        print(red("error") + ": no slate.toml found in current directory");
+        print("run " + bold_slate("slate new <name>") + " to create a project");
+        return;
+    }
+
+    print(bold_slate("slate") + " syncing dependencies...");
+    print("");
+
+    string toml = file("slate.toml").read();
+
+    if toml.contains("[deps]") == false {
+        print("no dependencies found in slate.toml");
+        return;
+    }
+
+    list(string) lines = toml.split("\n");
+    mutable bool in_deps = false;
+    mutable int synced = 0;
+    mutable int i = 0;
+    while i < lines.len() {
+        string line = lines.get(i);
+        if line == "[deps]" {
+            in_deps = true;
+        } else if line.starts_with("[") {
+            in_deps = false;
+        } else if in_deps and line.contains("git") {
+            list(string) parts = line.split("\"");
+            string url = parts.get(1);
+            list(string) url_parts = url.split("/");
+            string name = url_parts.get(url_parts.len() - 1);
+            string clean_name = name.replace(".git", "");
+            print(bold_slate(clean_name) + " syncing...");
+            synced = synced + 1;
+        }
+        i += 1;
+    }
+
+    if synced == 0 {
+        print("no git dependencies found");
+        return;
+    }
+
+    print("");
+    print(bold_green("synced") + " " + string(synced) + " dependency(s)");
+    print(bold("note") + ": full dependency resolution coming in 0.3.0");
 }

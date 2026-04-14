@@ -1,5 +1,40 @@
 module remove;
 
+use slate;
+
 void cmd_remove(list(string) args) {
-    print("slate: 'remove' is not yet available. run 'slate help' for usage.");
+    if args.len() < 2 {
+        print("slate remove: no dependency given.");
+        print("usage: slate remove <name>");
+        return;
+    }
+
+    string name = args.get(1);
+
+    if file("slate.toml").exists() == false {
+        print(red("error") + ": no slate.toml found in current directory");
+        print("run " + bold_slate("slate new <name>") + " to create a project");
+        return;
+    }
+
+    string toml = file("slate.toml").read();
+
+    if toml.contains(name) == false {
+        print(bold_yellow("warning") + ": " + bold_slate(name) + " not found in slate.toml");
+        return;
+    }
+
+    list(string) lines = toml.split("\n");
+    mutable string new_toml = "";
+    mutable int i = 0;
+    while i < lines.len() {
+        string line = lines.get(i);
+        if line.contains(name) == false {
+            new_toml = new_toml + line + "\n";
+        }
+        i += 1;
+    }
+
+    file("slate.toml").write(new_toml);
+    print(bold_green("removed") + " " + bold_slate(name) + " from slate.toml");
 }

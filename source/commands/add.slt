@@ -1,5 +1,42 @@
 module add;
 
 void cmd_add(list(string) args) {
-    print("slate: 'add' is not yet available. run 'slate help' for usage.");
+    if args.len() < 2 {
+        print("slate add: no dependency given.");
+        print("usage: slate add <git-url>");
+        return;
+    }
+
+    string url = args.get(1);
+
+    if file("slate.toml").exists() == false {
+        print(red("error") + ": no slate.toml found in current directory");
+        print("run " + bold_slate("slate new <name>") + " to create a project");
+        return;
+    }
+
+    string toml = file("slate.toml").read();
+
+    if toml.contains(url) {
+        print(bold_yellow("warning") + ": " + url + " is already in slate.toml");
+        return;
+    }
+
+    # Extract name from url — last segment without .git
+    list(string) parts = url.split("/");
+    string raw_name = parts.get(parts.len() - 1);
+    string name = raw_name.replace(".git", "");
+
+    string dep_line = name + " = { git = \"" + url + "\" }";
+
+    mutable string new_toml = "";
+    if toml.contains("[deps]") {
+        new_toml = toml.replace("[deps]", "[deps]\n" + dep_line);
+    } else {
+        new_toml = toml + "\n[deps]\n" + dep_line + "\n";
+    }
+
+    file("slate.toml").write(new_toml);
+    print(bold_green("added") + " " + bold_slate(name) + " to slate.toml");
+    print("url: " + url);
 }

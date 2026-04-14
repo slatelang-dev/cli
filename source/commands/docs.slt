@@ -1,5 +1,87 @@
 module docs;
 
 void cmd_docs(list(string) args) {
-    print("slate: 'docs' is not yet available. run 'slate help' for usage.");
+    if args.len() < 2 {
+        print("slate docs — slatelang.dev (coming soon)");
+        print("");
+        print("usage: slate docs <topic>");
+        print("");
+        print("topics:");
+        print("  " + "types        " + "int, float, string, bool, char, list, table, option, result");
+        print("  " + "variables    " + "const, mutable, affine, immutable by default");
+        print("  " + "functions    " + "declarations, return types, parameters");
+        print("  " + "control      " + "if, while, for, match");
+        print("  " + "modules      " + "use, module, visibility");
+        print("  " + "builtins     " + "print, read, file, run, args");
+        print("  " + "errors       " + "result(T), ok, error");
+        print("  " + "options      " + "option(T), some, none");
+        print("  " + "structs      " + "struct declarations, fields, methods");
+        print("  " + "enums        " + "enum declarations, variants, match");
+        return;
+    }
+
+    string topic = args.get(1);
+
+    if topic == "types" {
+        print(bold("types") + " — Slate's built-in types");
+        print("");
+        print("  int           64-bit signed integer");
+        print("  float         64-bit floating point");
+        print("  string        UTF-8 text");
+        print("  bool          true / false");
+        print("  char          single Unicode character");
+        print("  list(T)       ordered collection");
+        print("  table(K, V)   key-value collection");
+        print("  option(T)     some(val) / none");
+        print("  result(T)     ok(val) / error(msg)");
+        return;
+    }
+
+    if topic == "variables" {
+        print(bold("variables") + " — Slate's variable system");
+        print("");
+        print("  const int X = 5          compile-time constant");
+        print("  int x = 5                immutable by default");
+        print("  mutable int y = 5        explicitly mutable");
+        print("  affine File f = open()   single owner, auto-drop");
+        return;
+    }
+
+    if topic == "builtins" {
+        print(bold("builtins") + " — Slate's built-in functions");
+        print("");
+        print("  print(string)            print to stdout");
+        print("  read()                   read a line from stdin");
+        print("  file(path)               open a file handle");
+        print("  run(cmd, args)           run a shell command");
+        print("  args()                   command line arguments");
+        return;
+    }
+
+    if topic == "errors" {
+        print(bold("errors") + " — result(T)");
+        print("");
+        print("  result(T) r = ok(val)         success");
+        print("  result(T) r = error(msg)      failure");
+        print("  match r {");
+        print("      ok:    { ... }");
+        print("      error: { ... }");
+        print("  }");
+        return;
+    }
+
+    if topic == "options" {
+        print(bold("options") + " — option(T)");
+        print("");
+        print("  option(T) x = some(val)       present");
+        print("  option(T) x = none            absent");
+        print("  match x {");
+        print("      some: { ... }");
+        print("      none: { ... }");
+        print("  }");
+        return;
+    }
+
+    print(red("unknown topic") + ": " + topic);
+    print("run " + bold_slate("slate docs") + " to see available topics");
 }

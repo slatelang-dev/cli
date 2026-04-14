@@ -7,6 +7,8 @@ use test;
 use debug;
 use tidy;
 use new;
+use init;
+use create;
 use add;
 use remove;
 use sync;

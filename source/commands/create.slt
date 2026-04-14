@@ -1,0 +1,43 @@
+module create;
+
+use slate;
+
+void cmd_create(list(string) args) {
+    if args.len() < 2 {
+        print("slate create: no path given.");
+        print("usage: slate create <path>");
+        print("  slate create source/parser.slt   create a .slt file");
+        print("  slate create source/parser/      create a directory");
+        return;
+    }
+
+    string path = args.get(1);
+
+    if path.ends_with("/") {
+        if file(path).exists() {
+            print(bold_yellow("warning") + ": " + bold_slate(path) + " already exists");
+            return;
+        }
+        run("mkdir", "-p", path);
+        print(bold_green("created") + " " + bold_slate(path));
+        return;
+    }
+
+    if path.ends_with(".slt") == false {
+        print(red("error") + ": path must end with .slt or /");
+        print("usage: slate create <path.slt> or <path/>");
+        return;
+    }
+
+    if file(path).exists() {
+        print(bold_yellow("warning") + ": " + bold_slate(path) + " already exists");
+        return;
+    }
+
+    list(string) parts = path.split("/");
+    string filename = parts.get(parts.len() - 1);
+    string mod_name = filename.replace(".slt", "");
+
+    file(path).write("module " + mod_name + ";\n");
+    print(bold_green("created") + " " + bold_slate(path));
+}

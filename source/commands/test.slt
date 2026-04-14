@@ -1,5 +1,51 @@
 module test;
 
+use slate;
+
 void cmd_test(list(string) args) {
-    print("slate: 'test' is not yet available. run 'slate help' for usage.");
+    if args.len() < 2 {
+        print("slate test: no file given.");
+        print("usage: slate test <file>");
+        return;
+    }
+    string path = args.get(1);
+    if file(path).exists() == false {
+        print(red("error") + ": file not found: " + bold_slate(path));
+        return;
+    }
+
+    string source = file(path).read();
+    ParseResult result = parse(source);
+    if result.ok == false {
+        print(red("parse error") + ": " + result.error);
+        return;
+    }
+
+    AnalysisResult ar = analyse(result.node, path);
+    if ar.errors.len() > 0 {
+        string output = render_all(ar.errors, ar.warnings, source);
+        print(output);
+        return;
+    }
+
+    # Scan for #T annotations
+    list(string) lines = source.split("\n");
+    mutable int found = 0;
+    mutable int i = 0;
+    while i < lines.len() {
+        string line = lines.get(i);
+        if line.contains("#T") {
+            found = found + 1;
+        }
+        i += 1;
+    }
+
+    if found == 0 {
+        print(bold_yellow("warning") + ": no test annotations found in " + bold_slate(path));
+        print("add " + bold("#T expected output: ...") + " comments to your file");
+        return;
+    }
+
+    print(bold_slate("slate") + " found " + string(found) + " test annotation(s) in " + bold_slate(path));
+    print(bold_yellow("note") + ": test execution is not yet available — coming in 0.3.0");
 }

@@ -1,5 +1,7 @@
 module update;
 
+use slate;
+
 void cmd_update(list(string) args) {
-    print("slate: 'update' is not yet available. run 'slate help' for usage.");
+    print("slate: 'update' is not yet available. run " + bold_slate("slate help") + " for usage.");
 }

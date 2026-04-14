@@ -8,21 +8,23 @@ void main() {
         return;
     }
     string cmd = args.get(0);
-    if cmd == "run" { cmd_run(args); }
-    else if cmd == "check" { cmd_check(args); }
-    else if cmd == "new" { cmd_new(args); }
-    else if cmd == "help" { cmd_help(args); }
-    else if cmd == "test" { cmd_test(args); }
-    else if cmd == "build" { cmd_build(args); }
-    else if cmd == "clean" { cmd_clean(args); }
-    else if cmd == "debug" { cmd_debug(args); }
-    else if cmd == "tidy" { cmd_tidy(args); }
-    else if cmd == "sync" { cmd_sync(args); }
-    else if cmd == "update" { cmd_update(args); }
-    else if cmd == "docs" { cmd_docs(args); }
-    else if cmd == "info" { cmd_info(args); }
-    else if cmd == "add" { cmd_add(args); }
+    if cmd == "run"     { cmd_run(args); }
+    else if cmd == "check"  { cmd_check(args); }
+    else if cmd == "build"  { cmd_build(args); }
+    else if cmd == "test"   { cmd_test(args); }
+    else if cmd == "debug"  { cmd_debug(args); }
+    else if cmd == "tidy"   { cmd_tidy(args); }
+    else if cmd == "new"    { cmd_new(args); }
+    else if cmd == "init"   { cmd_init(args); }
+    else if cmd == "create" { cmd_create(args); }
+    else if cmd == "add"    { cmd_add(args); }
     else if cmd == "remove" { cmd_remove(args); }
+    else if cmd == "sync"   { cmd_sync(args); }
+    else if cmd == "update" { cmd_update(args); }
+    else if cmd == "docs"   { cmd_docs(args); }
+    else if cmd == "info"   { cmd_info(args); }
+    else if cmd == "help"   { cmd_help(args); }
+    else if cmd == "clean"  { cmd_clean(args); }
     else {
         print("slate: unknown command " + bold_slate("'" + cmd + "'") + ". run " + bold_slate("slate help") + " for usage.");
     }

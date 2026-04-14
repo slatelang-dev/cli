@@ -1,5 +1,20 @@
 module info;
 
+use slate;
+use compiler;
+
 void cmd_info(list(string) args) {
-    print("slate: 'info' is not yet available. run 'slate help' for usage.");
+    Project p = load_project_file();
+    if project_valid(p) == false {
+        print(red("error") + ": invalid or missing slate.toml");
+        print("make sure your slate.toml has a name and entry field");
+        return;
+    }
+
+    print(bold_slate("slate") + " project info");
+    print("");
+    print(bold("name:        ") + p.name);
+    print(bold("version:     ") + p.version);
+    print(bold("description: ") + p.description);
+    print(bold("entry:       ") + p.entry);
 }

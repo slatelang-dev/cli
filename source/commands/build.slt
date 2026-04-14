@@ -1,5 +1,48 @@
 module build;
 
+use slate;
+use compiler;
+
 void cmd_build(list(string) args) {
-    print("slate: 'build' is not yet available. run 'slate help' for usage.");
+    Project p = load_project_file();
+    if project_valid(p) == false {
+        print(red("error") + ": invalid or missing slate.toml");
+        print("make sure your slate.toml has a name and entry field");
+        return;
+    }
+
+    print(bold_slate("slate") + " building " + bold(p.name) + "...");
+
+    LoadedModule entry = load_entry(p);
+    if entry.ok == false {
+        print(red("error") + ": " + entry.error);
+        return;
+    }
+
+    AnalysisResult ar = analyse(entry.ast, entry.path);
+    if ar.errors.len() > 0 {
+        string output = render_all(ar.errors, ar.warnings, entry.source);
+        print(output);
+        return;
+    }
+
+    Emitter e = new_emitter();
+    e = emit_file_header(e, "x86_64-unknown-linux-gnu");
+
+    if emitter_has_errors(e) {
+        print(red("error") + ": codegen failed");
+        return;
+    }
+
+    string out_dir = "builds/";
+    string ll_path = out_dir + p.name + ".ll";
+    string bin_path = out_dir + p.name;
+
+    run("mkdir", "-p", out_dir);
+    file(ll_path).write(e.output);
+
+    print(bold_slate(p.name) + " compiling...");
+    run("clang", ll_path, "-o", bin_path);
+
+    print(bold_green("built") + " " + bin_path + " ✓");
 }
