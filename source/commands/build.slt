@@ -26,20 +26,14 @@ void cmd_build(list(string) args) {
         return;
     }
 
-    Emitter e = new_emitter();
-    e = emit_file_header(e, "x86_64-unknown-linux-gnu");
-
-    if emitter_has_errors(e) {
-        print(red("error") + ": codegen failed");
-        return;
-    }
+    string ll = walk_program(entry.ast, "x86_64-unknown-linux-gnu");
 
     string out_dir = "builds/";
     string ll_path = out_dir + p.name + ".ll";
     string bin_path = out_dir + p.name;
 
     run("mkdir", "-p", out_dir);
-    file(ll_path).write(e.output);
+    file(ll_path).write(ll);
 
     print(bold_slate(p.name) + " compiling...");
     run("clang", ll_path, "-o", bin_path);
