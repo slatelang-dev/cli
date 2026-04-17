@@ -14,8 +14,8 @@ void cmd_build(list(string) args) {
     print(bold_slate("slate") + " building " + bold(p.name) + "...");
 
     LoadedModule entry = load_entry(p);
-    if entry.ok == false {
-        print(red("error") + ": " + entry.error);
+    if entry.loaded == false {
+        print(red("error") + ": " + entry.load_error);
         return;
     }
 
