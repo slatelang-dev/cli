@@ -16,8 +16,8 @@ void cmd_test(list(string) args) {
 
     string source = file(path).read();
     ParseResult result = parse(source);
-    if result.ok == false {
-        print(red("parse error") + ": " + result.error);
+    if result.success == false {
+        print(red("parse error") + ": " + result.message);
         return;
     }
 

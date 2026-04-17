@@ -1,0 +1,24 @@
+module test_build;
+
+use slate;
+use compiler;
+
+void cmd_test_build() {
+    print("step 1: loading project file...");
+    Project p = load_project_file();
+    print("step 3: name = " + p.name);
+    print("step 4: entry = " + p.entry);
+    LoadedModule entry = load_entry(p);
+    print("step 8: loaded = " + string(entry.loaded));
+    print("step 9a: ast kind = " + string(entry.ast.kind));
+    print("step 9b: child count = " + string(entry.ast.children.len()));
+    print("step 9c: running analysis...");
+    print("step 9d: checking first child kind = " + string(entry.ast.children.get(0).kind));
+    print("step 9e: checking first child value = " + entry.ast.children.get(0).value);
+    AnalysisResult ar = analyse(entry.ast, entry.path);
+    AnalysisResult ar = analyse(entry.ast, entry.path);
+    print("step 10: errors = " + string(ar.errors.len()));
+    print("step 11: running walker...");
+    string ll = walk_program(entry.ast, "x86_64-unknown-linux-gnu");
+    print("step 12: ll length = " + string(ll.len()));
+}
