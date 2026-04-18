@@ -19,7 +19,7 @@ void cmd_build(list(string) args) {
         return;
     }
 
-    AnalysisResult ar = analyse(entry.ast, entry.path);
+    AnalysisResult ar = analyse_bare(entry.ast, entry.path, p.bare);
     if ar.errors.len() > 0 {
         string output = render_all(ar.errors, ar.warnings, entry.source);
         print(output);
