@@ -29,10 +29,12 @@ void cmd_build(list(string) args) {
     string ll = walk_program(entry.ast, "x86_64-unknown-linux-gnu");
 
     string out_dir = "builds/";
-    string ll_path = out_dir + p.name + ".ll";
-    string bin_path = out_dir + p.name;
+    string cache_dir = "builds/.cache/";
+    string ll_path = cache_dir + p.bin + ".ll";
+    string bin_path = out_dir + p.bin;
 
     run("mkdir", "-p", out_dir);
+    run("mkdir", "-p", cache_dir);
     file(ll_path).write(ll);
 
     print(bold_slate(p.name) + " compiling...");

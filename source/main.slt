@@ -11,7 +11,7 @@ void main() {
     string cmd = args.get(0);
     if cmd == "run"     { cmd_run(args); }
     else if cmd == "check"  { cmd_check(args); }
-    else if cmd == "build"  { cmd_test_build(); }
+    else if cmd == "build"  { cmd_build(args); }
     else if cmd == "test"   { cmd_test(args); }
     else if cmd == "debug"  { cmd_debug(args); }
     else if cmd == "tidy"   { cmd_tidy(args); }
