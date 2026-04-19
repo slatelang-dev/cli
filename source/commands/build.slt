@@ -29,6 +29,7 @@ void cmd_build(list(string) args) {
     string out_dir = "builds/";
     string cache_dir = "builds/.cache/";
     string ll_path = cache_dir + p.bin + ".ll";
+    string shim_ll_path = cache_dir + "shim.ll";
     string bin_path = out_dir + p.bin;
 
     run("mkdir", "-p", out_dir);
@@ -37,8 +38,18 @@ void cmd_build(list(string) args) {
     string ll = walk_program(entry.ast, "x86_64-pc-linux-gnu");
     file(ll_path).write(ll);
 
+    string shim_path = home() + "/.slate/deps/runtime/source/shim.slt";
+    string shim_source = file(shim_path).read();
+    ParseResult shim_parsed = parse(shim_source);
+    if shim_parsed.success == false {
+        print(red("error") + ": failed to parse shim: " + shim_parsed.message);
+        return;
+    }
+    string shim_ll = walk_program(shim_parsed.node, "x86_64-pc-linux-gnu");
+    file(shim_ll_path).write(shim_ll);
+
     print(bold_slate(p.name) + " compiling...");
-    run("clang", ll_path, "-o", bin_path, "-Wno-override-module");
+    run("clang", ll_path, shim_ll_path, "-o", bin_path, "-Wno-override-module");
 
     if file(bin_path).exists() {
         print(bold_green("built") + " " + bin_path + " ✓");
