@@ -30,6 +30,7 @@ void cmd_build(list(string) args) {
     string cache_dir = "builds/.cache/";
     string ll_path = cache_dir + p.bin + ".ll";
     string shim_ll_path = cache_dir + "shim.ll";
+    string linked_ll_path = cache_dir + p.bin + "_linked.ll";
     string bin_path = out_dir + p.bin;
 
     run("mkdir", "-p", out_dir);
@@ -48,8 +49,10 @@ void cmd_build(list(string) args) {
     string shim_ll = walk_program(shim_parsed.node, "x86_64-pc-linux-gnu");
     file(shim_ll_path).write(shim_ll);
 
+    run("llvm-link", ll_path, shim_ll_path, "-o", linked_ll_path, "-S");
+
     print(bold_slate(p.name) + " compiling...");
-    run("clang", ll_path, shim_ll_path, "-o", bin_path, "-Wno-override-module");
+    run("clang", linked_ll_path, "-o", bin_path, "-Wno-override-module");
 
     if file(bin_path).exists() {
         print(bold_green("built") + " " + bin_path + " ✓");
