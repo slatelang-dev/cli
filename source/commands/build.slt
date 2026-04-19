@@ -26,8 +26,6 @@ void cmd_build(list(string) args) {
         return;
     }
 
-    string ll = walk_program(entry.ast, "x86_64-unknown-linux-gnu");
-
     string out_dir = "builds/";
     string cache_dir = "builds/.cache/";
     string ll_path = cache_dir + p.bin + ".ll";
@@ -35,10 +33,16 @@ void cmd_build(list(string) args) {
 
     run("mkdir", "-p", out_dir);
     run("mkdir", "-p", cache_dir);
+
+    string ll = walk_program(entry.ast, "x86_64-pc-linux-gnu");
     file(ll_path).write(ll);
 
     print(bold_slate(p.name) + " compiling...");
-    run("clang", ll_path, "-o", bin_path);
+    run("clang", ll_path, "-o", bin_path, "-Wno-override-module");
 
-    print(bold_green("built") + " " + bin_path + " ✓");
+    if file(bin_path).exists() {
+        print(bold_green("built") + " " + bin_path + " ✓");
+    } else {
+        print(red("error") + ": compilation failed");
+    }
 }
