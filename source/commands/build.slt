@@ -36,7 +36,7 @@ void cmd_build(list(string) args) {
     run("mkdir", "-p", out_dir);
     run("mkdir", "-p", cache_dir);
 
-    string ll = walk_program(entry.ast, "x86_64-pc-linux-gnu");
+    string ll = walk_program(entry.ast, "x86_64-pc-linux-gnu", true);
     file(ll_path).write(ll);
 
     string shim_path = home() + "/.slate/deps/runtime/source/shim.slt";
@@ -46,7 +46,7 @@ void cmd_build(list(string) args) {
         print(red("error") + ": failed to parse shim: " + shim_parsed.message);
         return;
     }
-    string shim_ll = walk_program(shim_parsed.node, "x86_64-pc-linux-gnu");
+    string shim_ll = walk_program(shim_parsed.node, "x86_64-pc-linux-gnu", false);
     file(shim_ll_path).write(shim_ll);
 
     run("llvm-link", ll_path, shim_ll_path, "-o", linked_ll_path, "-S");
