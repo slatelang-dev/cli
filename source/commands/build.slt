@@ -46,7 +46,7 @@ void cmd_build(list(string) args) {
         print(red("error") + ": failed to parse shim: " + shim_parsed.message);
         return;
     }
-    string shim_ll = walk_program(shim_parsed.node, "x86_64-pc-linux-gnu", true);
+    string shim_ll = walk_program(shim_parsed.node, "x86_64-pc-linux-gnu", false);
     file(shim_ll_path).write(shim_ll);
 
     run("llvm-link", ll_path, shim_ll_path, "-o", linked_ll_path, "-S");
