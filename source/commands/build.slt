@@ -36,7 +36,11 @@ void cmd_build(list(string) args) {
     run("mkdir", "-p", out_dir);
     run("mkdir", "-p", cache_dir);
 
-    string ll = walk_program(entry.ast, "x86_64-pc-linux-gnu", true);
+    string source_dir = "source";
+    list(Node) module_asts = collect_module_asts(entry.ast, source_dir, empty);
+    module_asts = module_asts.add(entry.ast);
+
+    string ll = walk_all(module_asts, "x86_64-pc-linux-gnu", true);
     file(ll_path).write(ll);
 
     string shim_path = home() + "/.slate/deps/runtime/source/shim.slt";
