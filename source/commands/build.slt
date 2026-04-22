@@ -39,7 +39,7 @@ void cmd_build(list(string) args) {
     run("mkdir", "-p", cache_dir);
 
     string source_dir = "source";
-    list(Node) module_asts = collect_module_asts(entry.ast, source_dir, empty);
+    mutable list(Node) module_asts = collect_module_asts(entry.ast, source_dir, empty);
     module_asts = module_asts.add(entry.ast);
     print(gray("  ✓ modules collected"));
 
