@@ -9,7 +9,7 @@ void cmd_init(list(string) args) {
         return;
     }
 
-    string name = "";
+    mutable string name = "";
     if args.len() >= 2 {
         name = args.get(1);
     } else {
