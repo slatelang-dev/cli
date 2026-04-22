@@ -15,7 +15,12 @@ void cmd_check(list(string) args) {
         print(red("parse error: ") + result.message);
         return;
     }
-    AnalysisResult ar = analyse(result.node, path);
+    mutable bool bare = false;
+    if file("slate.toml").exists() {
+        Project p = load_project_file();
+        bare = p.bare;
+    }
+    AnalysisResult ar = analyse_bare(result.node, path, bare);
     string output = render_all(ar.errors, ar.warnings, source);
     if output.len() > 0 {
         print(output);
