@@ -2,7 +2,7 @@ use slate;
 use commands;
 
 void main() {
-    list(string) args = input().args();
+    list(string) args = args();
     if args.len() == 0 {
         print("slate: no command given. run " + bold_slate("slate help") + " for usage.");
         return;
