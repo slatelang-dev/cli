@@ -106,25 +106,16 @@ void cmd_build(list(string) args) {
     print(bold_slate(p.name) + " linking...");
 
     int to = time();
-    mutable list(string) clang_args = ("clang",);
+    mutable string script = "#!/bin/sh\nclang";
     mutable int ci = 0;
     while ci < ll_paths.len() {
-        clang_args = clang_args.add(ll_paths.get(ci));
+        script = script + " " + ll_paths.get(ci);
         ci = ci + 1;
     }
-    clang_args = clang_args.add(runtime_path);
-    clang_args = clang_args.add("-o");
-    clang_args = clang_args.add(bin_path);
-    clang_args = clang_args.add("-Wno-override-module");
-    print("cwd check: " + run("pwd"));
-    print("first ll exists: " + string(file(ll_paths.get(0)).exists()));
-    print("first ll path: " + ll_paths.get(0));
-    mutable int di = 0;
-    while di < clang_args.len() {
-        print("clang_arg[" + string(di) + "]: " + clang_args.get(di));
-        di = di + 1;
-    }
-    run(clang_args);
+    script = script.concat(" ", runtime_path, " -o ", bin_path, " -Wno-override-module\n");
+    file("builds/.cache/link.sh").write(script);
+    run("chmod", "+x", "builds/.cache/link.sh");
+    run("sh", "builds/.cache/link.sh");
     int tp = time();
     print("[time] link: " + string(tp - to) + "ms");
 
