@@ -57,19 +57,8 @@ void cmd_build(list(string) args) {
 
     string triple = run("clang", "-dumpmachine");
 
-    int tpre = time();
-    list(Node) all_asts = empty;
-    mutable int mi = 0;
-    while mi < modules.len() {
-        LoadedModule m = load_module(modules.get(mi).name, modules.get(mi).path);
-        all_asts = all_asts.add(m.ast);
-        mi = mi + 1;
-    }
-    int tpost = time();
-    print("[time] load all ASTs: " + string(tpost - tpre) + "ms");
-
     int ti = time();
-    Registry reg = build_registry(all_asts);
+    Registry reg = build_registry_from_modules(modules);
     int tj = time();
     print("[time] build_registry: " + string(tj - ti) + "ms");
 
