@@ -72,8 +72,7 @@ void cmd_build(list(string) args) {
         ModuleInfo mod_info = modules.get(i);
         string mod_name = mod_info.name;
         string mod_path = mod_info.path;
-        string ll_key = mod_path.replace("/", "_");
-        string ll_path = cache_dir + ll_key + ".ll";
+        string ll_path = cache_dir + mod_path.hash() + ".ll";
 
         mutable bool needs_compile = true;
         if file(ll_path).exists() {
