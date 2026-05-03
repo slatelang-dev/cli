@@ -50,19 +50,23 @@ void cmd_build(list(string) args) {
     string source_dir = "source";
     int tg = time();
     mutable list(ModuleInfo) modules = collect_module_asts(entry.ast, source_dir, empty);
-    modules = modules.add(ModuleInfo(ast: entry.ast, path: p.entry, name: "main"));
+    modules = modules.add(ModuleInfo(path: p.entry, name: "main"));
     int th = time();
     print("[time] collect_module_asts: " + string(th - tg) + "ms (" + string(modules.len()) + " modules)");
     print(gray("  ✓ modules collected"));
 
     string triple = run("clang", "-dumpmachine");
 
+    int tpre = time();
     list(Node) all_asts = empty;
     mutable int mi = 0;
     while mi < modules.len() {
-        all_asts = all_asts.add(modules.get(mi).ast);
+        LoadedModule m = load_module(modules.get(mi).name, modules.get(mi).path);
+        all_asts = all_asts.add(m.ast);
         mi = mi + 1;
     }
+    int tpost = time();
+    print("[time] load all ASTs: " + string(tpost - tpre) + "ms");
 
     int ti = time();
     Registry reg = build_registry(all_asts);
@@ -81,9 +85,6 @@ void cmd_build(list(string) args) {
         string mod_path = mod_info.path;
         string ll_path = cache_dir + mod_name + ".ll";
 
-        string source_content = file(mod_path).read();
-        string source_hash = source_content.hash();
-
         mutable bool needs_compile = true;
         if file(ll_path).exists() {
             needs_compile = false;
@@ -91,7 +92,8 @@ void cmd_build(list(string) args) {
 
         int tl = time();
         if needs_compile {
-            string ll = walk_module(mod_info.ast, triple, reg);
+            LoadedModule m = load_module(mod_name, mod_path);
+            string ll = walk_module(m.ast, triple, reg);
             int tm = time();
             print("[time] walk_module(" + mod_name + "): " + string(tm - tl) + "ms");
             file(ll_path).write(ll);
