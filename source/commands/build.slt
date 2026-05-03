@@ -41,7 +41,8 @@ void cmd_build(list(string) args) {
     module_asts = module_asts.add(entry.ast);
     print(gray("  ✓ modules collected"));
 
-    string ll = walk_all(module_asts, "x86_64-pc-linux-gnu");
+    string triple = run("clang -dumpmachine");
+    string ll = walk_all(module_asts, triple);
     file(ll_path).write(ll);
     print(gray("  ✓ IR emitted"));
 
