@@ -119,6 +119,11 @@ void cmd_build(list(string) args) {
     print("cwd check: " + run("pwd"));
     print("first ll exists: " + string(file(ll_paths.get(0)).exists()));
     print("first ll path: " + ll_paths.get(0));
+    mutable int di = 0;
+    while di < clang_args.len() {
+        print("clang_arg[" + string(di) + "]: " + clang_args.get(di));
+        di = di + 1;
+    }
     run(clang_args);
     int tp = time();
     print("[time] link: " + string(tp - to) + "ms");
