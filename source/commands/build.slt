@@ -45,7 +45,7 @@ void cmd_build(list(string) args) {
     print("DEBUG: modules count = " + string(modules.len()));
     print(gray("  ✓ modules collected"));
 
-    string triple = run("clang -dumpmachine");
+    string triple = run("clang", "-dumpmachine");
     print("DEBUG: triple = " + triple);
 
     list(Node) all_asts = empty;
