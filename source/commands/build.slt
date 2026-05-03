@@ -127,6 +127,9 @@ void cmd_build(list(string) args) {
     clang_args = clang_args.add("-o");
     clang_args = clang_args.add(bin_path);
     clang_args = clang_args.add("-Wno-override-module");
+    print("cwd check: " + run("pwd"));
+    print("first ll exists: " + string(file(ll_paths.get(0)).exists()));
+    print("first ll path: " + ll_paths.get(0));
     run(clang_args);
     int tp = time();
     print("[time] link: " + string(tp - to) + "ms");
