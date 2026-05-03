@@ -57,9 +57,9 @@ void cmd_build(list(string) args) {
 
     mutable int i = 0;
     while i < modules.len() {
-        ModuleInfo mod = modules.get(i);
-        string mod_name = mod.name;
-        string mod_path = mod.path;
+        ModuleInfo mod_info = modules.get(i);
+        string mod_name = mod_info.name;
+        string mod_path = mod_info.path;
         string ll_path = cache_dir + mod_name + ".ll";
 
         string source_content = file(mod_path).read();
@@ -71,7 +71,7 @@ void cmd_build(list(string) args) {
         }
 
         if needs_compile {
-            string ll = walk_module(mod.ast, triple, reg);
+            string ll = walk_module(mod_info.ast, triple, reg);
             file(ll_path).write(ll);
             compiled = compiled + 1;
             print(gray("  compiled ") + mod_name);
