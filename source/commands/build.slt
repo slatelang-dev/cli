@@ -41,7 +41,7 @@ void cmd_build(list(string) args) {
     string source_dir = "source";
     print("DEBUG: collecting modules from " + source_dir);
     mutable list(ModuleInfo) modules = collect_module_asts(entry.ast, source_dir, empty);
-    modules = modules.add(ModuleInfo(ast: entry.ast, path: p.entry, name: "main"));
+    modules = modules.add(ModuleInfo(placeholder: 0, path: p.entry, name: "main"));
     print("DEBUG: modules count = " + string(modules.len()));
     print(gray("  ✓ modules collected"));
 
@@ -51,7 +51,11 @@ void cmd_build(list(string) args) {
     list(Node) all_asts = empty;
     mutable int mi = 0;
     while mi < modules.len() {
-        all_asts = all_asts.add(modules.get(mi).ast);
+        string source = file(modules.get(mi).path).read();
+        ParseResult pr = parse(source);
+        if pr.success {
+            all_asts = all_asts.add(pr.node);
+        }
         mi = mi + 1;
     }
 
@@ -88,7 +92,12 @@ void cmd_build(list(string) args) {
 
         if needs_compile {
             print("DEBUG: calling walk_module for " + mod_name);
-            string ll = walk_module(mod_info.ast, triple, reg);
+            string source_for_walk = file(mod_path).read();
+            ParseResult pr_for_walk = parse(source_for_walk);
+            string ll = "";
+            if pr_for_walk.success {
+                ll = walk_module(pr_for_walk.node, triple, reg);
+            }
             print("DEBUG: walk_module returned, ll.len() = " + string(ll.len()));
             if ll.len() == 0 {
                 print("ERROR: empty IR for " + mod_name);
