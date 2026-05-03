@@ -4,7 +4,11 @@ use slate;
 use compiler;
 
 void cmd_build(list(string) args) {
+    int ta = time();
     Project p = load_project_file();
+    int tb = time();
+    print("[time] load_entry: " + string(tb - ta) + "ms");
+
     if project_valid(p) == false {
         print(red("error") + ": invalid or missing slate.toml");
         print("make sure your slate.toml has a name and entry field");
@@ -13,14 +17,22 @@ void cmd_build(list(string) args) {
 
     print(bold_slate("slate") + " building " + bold(p.name) + "...");
 
+    int tc = time();
     LoadedModule entry = load_entry(p);
+    int td = time();
+    print("[time] load_entry (full): " + string(td - tc) + "ms");
+
     if entry.loaded == false {
         print(red("error") + ": " + entry.load_error);
         return;
     }
     print(gray("  ✓ entry loaded"));
 
+    int te = time();
     AnalysisResult ar = analyse_bare(entry.ast, entry.path, p.bare);
+    int tf = time();
+    print("[time] analyse_bare: " + string(tf - te) + "ms");
+
     if ar.errors.len() > 0 {
         string output = render_all(ar.errors, ar.warnings, entry.source);
         print(output);
@@ -36,8 +48,11 @@ void cmd_build(list(string) args) {
     run("mkdir", "-p", cache_dir);
 
     string source_dir = "source";
+    int tg = time();
     mutable list(ModuleInfo) modules = collect_module_asts(entry.ast, source_dir, empty);
     modules = modules.add(ModuleInfo(ast: entry.ast, path: p.entry, name: "main"));
+    int th = time();
+    print("[time] collect_module_asts: " + string(th - tg) + "ms (" + string(modules.len()) + " modules)");
     print(gray("  ✓ modules collected"));
 
     string triple = run("clang", "-dumpmachine");
@@ -49,12 +64,16 @@ void cmd_build(list(string) args) {
         mi = mi + 1;
     }
 
+    int ti = time();
     Registry reg = build_registry(all_asts);
+    int tj = time();
+    print("[time] build_registry: " + string(tj - ti) + "ms");
 
     mutable list(string) ll_paths = empty;
     mutable int compiled = 0;
     mutable int skipped = 0;
 
+    int tk = time();
     mutable int i = 0;
     while i < modules.len() {
         ModuleInfo mod_info = modules.get(i);
@@ -70,8 +89,11 @@ void cmd_build(list(string) args) {
             needs_compile = false;
         }
 
+        int tl = time();
         if needs_compile {
             string ll = walk_module(mod_info.ast, triple, reg);
+            int tm = time();
+            print("[time] walk_module(" + mod_name + "): " + string(tm - tl) + "ms");
             file(ll_path).write(ll);
             compiled = compiled + 1;
             print(gray("  compiled ") + mod_name);
@@ -83,6 +105,8 @@ void cmd_build(list(string) args) {
         ll_paths = ll_paths.add(ll_path);
         i = i + 1;
     }
+    int tn = time();
+    print("[time] total compile loop: " + string(tn - tk) + "ms");
 
     print(gray("  compiled: ") + string(compiled) + gray(" skipped: ") + string(skipped));
 
@@ -90,15 +114,23 @@ void cmd_build(list(string) args) {
 
     print(bold_slate(p.name) + " linking...");
 
-    string clang_cmd = "clang ";
+    int to = time();
+    mutable list(string) clang_args = ("clang",);
     mutable int ci = 0;
     while ci < ll_paths.len() {
-        clang_cmd = clang_cmd + ll_paths.get(ci) + " ";
+        clang_args = clang_args.add(ll_paths.get(ci));
         ci = ci + 1;
     }
-    clang_cmd = clang_cmd + runtime_path + " -o " + bin_path + " -Wno-override-module";
+    clang_args = clang_args.add(runtime_path);
+    clang_args = clang_args.add("-o");
+    clang_args = clang_args.add(bin_path);
+    clang_args = clang_args.add("-Wno-override-module");
+    run(clang_args);
+    int tp = time();
+    print("[time] link: " + string(tp - to) + "ms");
 
-    run(clang_cmd);
+    int tz = time();
+    print("[time] total build: " + string(tz - ta) + "ms");
 
     if file(bin_path).exists() {
         print(bold_green("built") + " " + bin_path + " ✓");
