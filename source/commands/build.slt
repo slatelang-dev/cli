@@ -30,27 +30,78 @@ void cmd_build(list(string) args) {
 
     string out_dir = "builds/";
     string cache_dir = "builds/.cache/";
-    string ll_path = cache_dir + p.bin + ".ll";
     string bin_path = out_dir + p.bin;
 
     run("mkdir", "-p", out_dir);
     run("mkdir", "-p", cache_dir);
 
     string source_dir = "source";
-    mutable list(Node) module_asts = collect_module_asts(entry.ast, source_dir, empty);
-    module_asts = module_asts.add(entry.ast);
+    mutable list(ModuleInfo) modules = collect_module_asts(entry.ast, source_dir, empty);
+    modules = modules.add(ModuleInfo(ast: entry.ast, path: p.entry, name: "main"));
     print(gray("  ✓ modules collected"));
 
     string triple = run("clang -dumpmachine");
-    string ll = walk_all(module_asts, triple);
-    file(ll_path).write(ll);
-    print(gray("  ✓ IR emitted"));
+
+    list(Node) all_asts = empty;
+    mutable int mi = 0;
+    while mi < modules.len() {
+        all_asts = all_asts.add(modules.get(mi).ast);
+        mi = mi + 1;
+    }
+
+    Registry reg = build_registry(all_asts);
+
+    mutable list(string) ll_paths = empty;
+    mutable int compiled = 0;
+    mutable int skipped = 0;
+
+    mutable int i = 0;
+    while i < modules.len() {
+        ModuleInfo mod = modules.get(i);
+        string mod_name = mod.name;
+        string mod_path = mod.path;
+        string ll_path = cache_dir + mod_name + ".ll";
+
+        string source_content = file(mod_path).read();
+        string source_hash = source_content.hash();
+
+        mutable bool needs_compile = true;
+        if file(ll_path).exists() {
+            needs_compile = false;
+        }
+
+        if needs_compile {
+            string ll = walk_module(mod.ast, triple, reg);
+            file(ll_path).write(ll);
+            compiled = compiled + 1;
+            print(gray("  compiled ") + mod_name);
+        } else {
+            skipped = skipped + 1;
+            print(gray("  cached ") + mod_name);
+        }
+
+        ll_paths = ll_paths.add(ll_path);
+        i = i + 1;
+    }
+
+    print(gray("  compiled: ") + string(compiled) + gray(" skipped: ") + string(skipped));
 
     string runtime_path = home() + "/.slate/deps/runtime/runtime.c";
 
-    print(bold_slate(p.name) + " compiling...");
-    run("clang", ll_path, runtime_path, "-o", bin_path, "-Wno-override-module");
-    print(gray("  compiling..."));
+    print(bold_slate(p.name) + " linking...");
+
+    string runtime_ll = cache_dir + "_runtime.ll";
+    file(runtime_ll).write("");
+
+    string clang_cmd = "clang ";
+    mutable int ci = 0;
+    while ci < ll_paths.len() {
+        clang_cmd = clang_cmd + ll_paths.get(ci) + " ";
+        ci = ci + 1;
+    }
+    clang_cmd = clang_cmd + runtime_path + " -o " + bin_path + " -Wno-override-module";
+
+    run(clang_cmd);
 
     if file(bin_path).exists() {
         print(bold_green("built") + " " + bin_path + " ✓");
