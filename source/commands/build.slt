@@ -4,6 +4,8 @@ use slate;
 use compiler;
 
 void cmd_build(list(string) args) {
+    print("DEBUG: starting build");
+
     Project p = load_project_file();
     if project_valid(p) == false {
         print(red("error") + ": invalid or missing slate.toml");
@@ -34,13 +36,17 @@ void cmd_build(list(string) args) {
 
     run("mkdir", "-p", out_dir);
     run("mkdir", "-p", cache_dir);
+    print("DEBUG: directories created");
 
     string source_dir = "source";
+    print("DEBUG: collecting modules from " + source_dir);
     mutable list(ModuleInfo) modules = collect_module_asts(entry.ast, source_dir, empty);
     modules = modules.add(ModuleInfo(ast: entry.ast, path: p.entry, name: "main"));
+    print("DEBUG: modules count = " + string(modules.len()));
     print(gray("  ✓ modules collected"));
 
     string triple = run("clang -dumpmachine");
+    print("DEBUG: triple = " + triple);
 
     list(Node) all_asts = empty;
     mutable int mi = 0;
@@ -49,30 +55,46 @@ void cmd_build(list(string) args) {
         mi = mi + 1;
     }
 
+    print("DEBUG: building registry");
     Registry reg = build_registry(all_asts);
+    print("DEBUG: registry built");
 
     mutable list(string) ll_paths = empty;
     mutable int compiled = 0;
     mutable int skipped = 0;
 
+    print("DEBUG: starting module loop, modules.len() = " + string(modules.len()));
     mutable int i = 0;
     while i < modules.len() {
         ModuleInfo mod_info = modules.get(i);
         string mod_name = mod_info.name;
         string mod_path = mod_info.path;
+        print("DEBUG: processing module " + mod_name + " at path " + mod_path);
         string ll_path = cache_dir + mod_name + ".ll";
+        print("DEBUG: ll_path = " + ll_path);
 
         string source_content = file(mod_path).read();
+        print("DEBUG: source read, len = " + string(source_content.len()));
         string source_hash = source_content.hash();
+        print("DEBUG: hash = " + source_hash);
 
         mutable bool needs_compile = true;
         if file(ll_path).exists() {
+            print("DEBUG: .ll exists, skipping");
             needs_compile = false;
+        } else {
+            print("DEBUG: .ll does not exist, will compile");
         }
 
         if needs_compile {
+            print("DEBUG: calling walk_module for " + mod_name);
             string ll = walk_module(mod_info.ast, triple, reg);
+            print("DEBUG: walk_module returned, ll.len() = " + string(ll.len()));
+            if ll.len() == 0 {
+                print("ERROR: empty IR for " + mod_name);
+            }
             file(ll_path).write(ll);
+            print("DEBUG: wrote " + ll_path);
             compiled = compiled + 1;
             print(gray("  compiled ") + mod_name);
         } else {
@@ -90,9 +112,6 @@ void cmd_build(list(string) args) {
 
     print(bold_slate(p.name) + " linking...");
 
-    string runtime_ll = cache_dir + "_runtime.ll";
-    file(runtime_ll).write("");
-
     string clang_cmd = "clang ";
     mutable int ci = 0;
     while ci < ll_paths.len() {
@@ -100,6 +119,7 @@ void cmd_build(list(string) args) {
         ci = ci + 1;
     }
     clang_cmd = clang_cmd + runtime_path + " -o " + bin_path + " -Wno-override-module";
+    print("DEBUG: clang_cmd = " + clang_cmd);
 
     run(clang_cmd);
 
