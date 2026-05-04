@@ -7,13 +7,53 @@ table(string, string) load_manifest(string cache_dir) {
     mutable table(string, string) result = empty;
     string path = cache_dir + "manifest.toml";
     if file(path).exists() {
-        result = toml(file(path).read()).parse();
+        string content = file(path).read();
+        list(string) lines = content.split("\n");
+        mutable int i = 0;
+        while i < lines.len() {
+            string line = lines.get(i);
+            if line.contains(" = ") {
+                int eq_pos = 0;
+                mutable int j = 0;
+                while j < line.len() {
+                    if line.chars().get(j) == " " && j + 2 < line.len() && line.chars().get(j + 1) == "=" && line.chars().get(j + 2) == " " {
+                        eq_pos = j;
+                        j = line.len();
+                    }
+                    j = j + 1;
+                }
+                if eq_pos > 0 {
+                    string key = "";
+                    mutable int k = 0;
+                    while k < eq_pos {
+                        key = key + string(line.chars().get(k));
+                        k = k + 1;
+                    }
+                    string val = "";
+                    k = eq_pos + 3;
+                    while k < line.len() {
+                        val = val + string(line.chars().get(k));
+                        k = k + 1;
+                    }
+                    result = result.set(key, val);
+                }
+            }
+            i = i + 1;
+        }
     }
     return result;
 }
 
 void save_manifest(string cache_dir, table(string, string) manifest) {
-    file(cache_dir + "manifest.toml").write(toml(manifest).encode());
+    mutable string out = "";
+    list(string) keys = manifest.keys();
+    mutable int i = 0;
+    while i < keys.len() {
+        if out.len() > 0 { out = out + "\n"; }
+        out = out + keys.get(i) + " = " + manifest.get(keys.get(i));
+        i = i + 1;
+    }
+    file(cache_dir + "manifest.toml").write(out);
 }
 
 void cmd_build(list(string) args) {
