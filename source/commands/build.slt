@@ -113,6 +113,7 @@ void cmd_build(list(string) args) {
                 return;
             }
             manifest = manifest.set(mod_path, source_hash);
+            save_manifest(cache_dir, manifest);
             int tm = time();
             print("[time] walk_module(" + mod_path + "): " + string(tm - tl) + "ms");
             compiled = compiled + 1;
@@ -129,8 +130,6 @@ void cmd_build(list(string) args) {
     print("[time] total compile loop: " + string(tn - tk) + "ms");
 
     print(gray("  compiled: ") + string(compiled) + gray(" skipped: ") + string(skipped));
-
-    save_manifest(cache_dir, manifest);
 
     string runtime_path = home() + "/.slate/deps/runtime/runtime.c";
 
