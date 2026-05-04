@@ -23,29 +23,6 @@ table(string, string) load_manifest(string cache_dir) {
     }
     return result;
 }
-                    j = j + 1;
-                }
-                if eq_pos > 0 {
-                    string key = "";
-                    mutable int k = 0;
-                    while k < eq_pos {
-                        key = key + string(line.chars().get(k));
-                        k = k + 1;
-                    }
-                    string val = "";
-                    k = eq_pos + 3;
-                    while k < line.len() {
-                        val = val + string(line.chars().get(k));
-                        k = k + 1;
-                    }
-                    result = result.set(key, val);
-                }
-            }
-            i = i + 1;
-        }
-    }
-    return result;
-}
 
 void save_manifest(string cache_dir, table(string, string) manifest) {
     mutable string out = "";
