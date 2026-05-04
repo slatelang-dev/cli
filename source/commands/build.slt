@@ -13,13 +13,16 @@ table(string, string) load_manifest(string cache_dir) {
         while i < lines.len() {
             string line = lines.get(i);
             if line.contains(" = ") {
-                int eq_pos = 0;
-                mutable int j = 0;
-                while j < line.len() {
-                    if line.chars().get(j) == " " && j + 2 < line.len() && line.chars().get(j + 1) == "=" && line.chars().get(j + 2) == " " {
-                        eq_pos = j;
-                        j = line.len();
-                    }
+                list(string) parts = line.split(" = ");
+                if parts.len() >= 2 {
+                    result = result.set(parts.get(0), parts.get(1));
+                }
+            }
+            i = i + 1;
+        }
+    }
+    return result;
+}
                     j = j + 1;
                 }
                 if eq_pos > 0 {
