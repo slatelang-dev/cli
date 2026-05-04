@@ -3,6 +3,38 @@ module build;
 use slate;
 use compiler;
 
+table(string, string) load_manifest(string cache_dir) {
+    mutable table(string, string) manifest = empty;
+    string path = cache_dir + "manifest.cache";
+    if file(path).exists() {
+        list(string) lines = file(path).read().split("\n");
+        mutable int i = 0;
+        while i < lines.len() {
+            string line = lines.get(i);
+            if line.contains("=") {
+                list(string) parts = line.split("=");
+                string key = parts.get(0);
+                string val = parts.get(1);
+                manifest = manifest.set(key, val);
+            }
+            i += 1;
+        }
+    }
+    return manifest;
+}
+
+void save_manifest(string cache_dir, table(string, string) manifest) {
+    mutable string out = "";
+    list(string) keys = manifest.keys();
+    mutable int i = 0;
+    while i < keys.len() {
+        string key = keys.get(i);
+        out = out + key + "=" + manifest.get(key) + "\n";
+        i += 1;
+    }
+    file(cache_dir + "manifest.cache").write(out);
+}
+
 void cmd_build(list(string) args) {
     int ta = time();
     Project p = load_project_file();
@@ -47,6 +79,8 @@ void cmd_build(list(string) args) {
     run("mkdir", "-p", out_dir);
     run("mkdir", "-p", cache_dir);
 
+    mutable table(string, string) manifest = load_manifest(cache_dir);
+
     string source_dir = "source";
     int tg = time();
     mutable list(ModuleInfo) modules = collect_module_asts(entry.ast, source_dir, empty);
@@ -73,14 +107,21 @@ void cmd_build(list(string) args) {
         string mod_name = mod_info.name;
         string mod_path = mod_info.path;
         string ll_path = cache_dir + mod_path.hash() + ".ll";
+        string source_content = file(mod_path).read();
+        string source_hash = source_content.hash();
 
         mutable bool needs_compile = true;
         if file(ll_path).exists() {
-            needs_compile = false;
+            if manifest.has(mod_path) {
+                if manifest.get(mod_path) == source_hash {
+                    needs_compile = false;
+                }
+            }
         }
 
         int tl = time();
         if needs_compile {
+            manifest = manifest.set(mod_path, source_hash);
             LoadedModule m = load_module(mod_name, mod_path);
             string ll = walk_module(m.ast, triple, reg);
             int tm = time();
@@ -100,6 +141,8 @@ void cmd_build(list(string) args) {
     print("[time] total compile loop: " + string(tn - tk) + "ms");
 
     print(gray("  compiled: ") + string(compiled) + gray(" skipped: ") + string(skipped));
+
+    save_manifest(cache_dir, manifest);
 
     string runtime_path = home() + "/.slate/deps/runtime/runtime.c";
 
