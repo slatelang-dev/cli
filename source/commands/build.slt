@@ -96,7 +96,7 @@ void cmd_build(list(string) args) {
     int tj = time();
     print("[time] build_registry: " + string(tj - ti) + "ms");
 
-    mutable list(string) ll_paths = empty;
+    mutable list(string) obj_paths = empty;
     mutable int compiled = 0;
     mutable int skipped = 0;
 
@@ -106,12 +106,14 @@ void cmd_build(list(string) args) {
         ModuleInfo mod_info = modules.get(i);
         string mod_name = mod_info.name;
         string mod_path = mod_info.path;
-        string ll_path = cache_dir + mod_path.hash() + ".ll";
         string source_content = file(mod_path).read();
         string source_hash = source_content.hash();
 
+        string obj_path = cache_dir + mod_path.hash() + ".o";
+        string ll_path = cache_dir + mod_path.hash() + ".ll";
+
         mutable bool needs_compile = true;
-        if file(ll_path).exists() {
+        if file(obj_path).exists() {
             if manifest.has(mod_path) {
                 if manifest.get(mod_path) == source_hash {
                     needs_compile = false;
@@ -124,9 +126,10 @@ void cmd_build(list(string) args) {
             manifest = manifest.set(mod_path, source_hash);
             LoadedModule m = load_module(mod_name, mod_path);
             string ll = walk_module(m.ast, triple, reg);
+            file(ll_path).write(ll);
+            run("clang", "-c", ll_path, "-o", obj_path, "-Wno-override-module");
             int tm = time();
             print("[time] walk_module(" + mod_path + "): " + string(tm - tl) + "ms");
-            file(ll_path).write(ll);
             compiled = compiled + 1;
             print(gray("  compiled ") + mod_path);
         } else {
@@ -134,7 +137,7 @@ void cmd_build(list(string) args) {
             print(gray("  cached ") + mod_name);
         }
 
-        ll_paths = ll_paths.add(ll_path);
+        obj_paths = obj_paths.add(obj_path);
         i = i + 1;
     }
     int tn = time();
@@ -149,16 +152,16 @@ void cmd_build(list(string) args) {
     print(bold_slate(p.name) + " linking...");
 
     int to = time();
-    mutable string script = "#!/bin/sh\nclang";
+    mutable list(string) link_args = ("clang",);
     mutable int ci = 0;
-    while ci < ll_paths.len() {
-        script = script + " " + ll_paths.get(ci);
+    while ci < obj_paths.len() {
+        link_args = link_args.add(obj_paths.get(ci));
         ci = ci + 1;
     }
-    script = script.concat(" ", runtime_path, " -o ", bin_path, " -Wno-override-module\n");
-    file("builds/.cache/link.sh").write(script);
-    run("chmod", "+x", "builds/.cache/link.sh");
-    run("sh", "builds/.cache/link.sh");
+    link_args = link_args.add(runtime_path);
+    link_args = link_args.add("-o");
+    link_args = link_args.add(bin_path);
+    run(link_args);
     int tp = time();
     print("[time] link: " + string(tp - to) + "ms");
 
