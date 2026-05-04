@@ -4,35 +4,15 @@ use slate;
 use compiler;
 
 table(string, string) load_manifest(string cache_dir) {
-    mutable table(string, string) manifest = empty;
-    string path = cache_dir + "manifest.cache";
+    string path = cache_dir + "manifest.toml";
     if file(path).exists() {
-        list(string) lines = file(path).read().split("\n");
-        mutable int i = 0;
-        while i < lines.len() {
-            string line = lines.get(i);
-            if line.contains("=") {
-                list(string) parts = line.split("=");
-                string key = parts.get(0);
-                string val = parts.get(1);
-                manifest = manifest.set(key, val);
-            }
-            i += 1;
-        }
+        return toml(file(path).read()).parse();
     }
-    return manifest;
+    return empty;
 }
 
 void save_manifest(string cache_dir, table(string, string) manifest) {
-    mutable string out = "";
-    list(string) keys = manifest.keys();
-    mutable int i = 0;
-    while i < keys.len() {
-        string key = keys.get(i);
-        out = out + key + "=" + manifest.get(key) + "\n";
-        i += 1;
-    }
-    file(cache_dir + "manifest.cache").write(out);
+    file(cache_dir + "manifest.toml").write(toml(manifest).encode());
 }
 
 void cmd_build(list(string) args) {
