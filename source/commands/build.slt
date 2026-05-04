@@ -123,11 +123,15 @@ void cmd_build(list(string) args) {
 
         int tl = time();
         if needs_compile {
-            manifest = manifest.set(mod_path, source_hash);
             LoadedModule m = load_module(mod_name, mod_path);
             string ll = walk_module(m.ast, triple, reg);
             file(ll_path).write(ll);
             run("clang", "-c", ll_path, "-o", obj_path, "-Wno-override-module");
+            if file(obj_path).exists() == false {
+                print(red("error") + ": failed to compile " + mod_name);
+                return;
+            }
+            manifest = manifest.set(mod_path, source_hash);
             int tm = time();
             print("[time] walk_module(" + mod_path + "): " + string(tm - tl) + "ms");
             compiled = compiled + 1;
