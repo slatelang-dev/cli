@@ -4,11 +4,12 @@ use slate;
 use compiler;
 
 table(string, string) load_manifest(string cache_dir) {
+    mutable table(string, string) result = empty;
     string path = cache_dir + "manifest.toml";
     if file(path).exists() {
-        return toml(file(path).read()).parse();
+        result = toml(file(path).read()).parse();
     }
-    return empty;
+    return result;
 }
 
 void save_manifest(string cache_dir, table(string, string) manifest) {
