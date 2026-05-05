@@ -90,8 +90,6 @@ void cmd_build(list(string) args) {
     print("[time] collect_module_asts: " + string(th - tg) + "ms (" + string(modules.len()) + " modules)");
     print(gray("  ✓ modules collected"));
 
-    string triple = run("clang", "-dumpmachine");
-
     int ti = time();
     Registry reg = build_registry_from_modules(modules);
     int tj = time();
@@ -111,7 +109,7 @@ void cmd_build(list(string) args) {
         string source_hash = source_content.hash();
 
         string obj_path = cache_dir + mod_path.hash() + ".o";
-        string ll_path = cache_dir + mod_path.hash() + ".ll";
+        string c_path = cache_dir + mod_path.hash() + ".c";
 
         mutable bool needs_compile = true;
         if file(obj_path).exists() {
@@ -125,9 +123,9 @@ void cmd_build(list(string) args) {
         int tl = time();
         if needs_compile {
             LoadedModule m = load_module(mod_name, mod_path);
-            string ll = walk_module(m.ast, triple, reg);
-            file(ll_path).write(ll);
-            run("clang", "-c", ll_path, "-o", obj_path, "-Wno-override-module");
+            string c_code = walk_module(m.ast, reg);
+            file(c_path).write(c_code);
+            run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing");
             if file(obj_path).exists() == false {
                 print(red("error") + ": failed to compile " + mod_name);
                 return;
