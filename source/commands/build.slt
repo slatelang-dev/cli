@@ -153,12 +153,15 @@ void cmd_build(list(string) args) {
     print(bold_slate(p.name) + " linking...");
 
     int to = time();
+    string runtime_dir = home() + "/.slate/deps/runtime/";
+    string main_c = runtime_dir + "main.c";
     mutable list(string) link_args = ("clang",);
     mutable int ci = 0;
     while ci < obj_paths.len() {
         link_args = link_args.add(obj_paths.get(ci));
         ci = ci + 1;
     }
+    link_args = link_args.add(main_c);
     link_args = link_args.add("-o");
     link_args = link_args.add(bin_path);
     run(link_args);
