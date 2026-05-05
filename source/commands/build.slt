@@ -150,8 +150,6 @@ void cmd_build(list(string) args) {
 
     print(gray("  compiled: ") + string(compiled) + gray(" skipped: ") + string(skipped));
 
-    string runtime_path = home() + "/.slate/deps/runtime/runtime.c";
-
     print(bold_slate(p.name) + " linking...");
 
     int to = time();
@@ -161,7 +159,6 @@ void cmd_build(list(string) args) {
         link_args = link_args.add(obj_paths.get(ci));
         ci = ci + 1;
     }
-    link_args = link_args.add(runtime_path);
     link_args = link_args.add("-o");
     link_args = link_args.add(bin_path);
     run(link_args);
