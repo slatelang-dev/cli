@@ -124,25 +124,30 @@ void cmd_build(list(string) args) {
         if needs_compile {
             LoadedModule m = load_module(mod_name, mod_path);
             string c_code = walk_module(m.ast, reg);
-            file(c_path).write(c_code);
-            string runtime_dir = home() + "/.slate/deps/runtime/";
-            run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
-            if file(obj_path).exists() == false {
-                print(red("error") + ": failed to compile " + mod_name);
-                return;
+            if c_code.len() > 0 {
+                file(c_path).write(c_code);
+                string runtime_dir = home() + "/.slate/deps/runtime/";
+                run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
+                if file(obj_path).exists() == false {
+                    print(red("error") + ": failed to compile " + mod_name);
+                    return;
+                }
+                manifest = manifest.set(mod_path, source_hash);
+                save_manifest(cache_dir, manifest);
+                obj_paths = obj_paths.add(obj_path);
+                int tm = time();
+                print("[time] walk_module(" + mod_path + "): " + string(tm - tl) + "ms");
+                compiled = compiled + 1;
+                print(gray("  compiled ") + mod_path);
+            } else {
+                skipped = skipped + 1;
+                print(gray("  skipped ") + mod_name + " (no code to emit)");
             }
-            manifest = manifest.set(mod_path, source_hash);
-            save_manifest(cache_dir, manifest);
-            int tm = time();
-            print("[time] walk_module(" + mod_path + "): " + string(tm - tl) + "ms");
-            compiled = compiled + 1;
-            print(gray("  compiled ") + mod_path);
         } else {
             skipped = skipped + 1;
             print(gray("  cached ") + mod_name);
         }
-
-        obj_paths = obj_paths.add(obj_path);
+        
         i = i + 1;
     }
     int tn = time();
