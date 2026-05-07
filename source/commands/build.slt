@@ -106,6 +106,8 @@ void cmd_build(list(string) args) {
 
     list(LoadedModule) ordered = reverse_modules(modules);
     print("[debug] ordered len: " + string(ordered.len()));
+    LoadedModule first = ordered.get(0);
+    print("[debug] first: " + first.name + " ast children: " + string(first.ast.children.len()));
 
     # -- Emit pass: walk all modules, write .c files --
     mutable list(string) to_c_paths = empty;
