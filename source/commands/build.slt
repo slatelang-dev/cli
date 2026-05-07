@@ -115,7 +115,7 @@ void cmd_build(list(string) args) {
     mutable list(string) to_mod_paths = empty;
     mutable list(string) to_hashes = empty;
 
-    int te0 = time();
+    int te_a = time();
     mutable int i = 0;
     while i < ordered.len() {
         LoadedModule m = ordered.get(i);
@@ -157,11 +157,11 @@ void cmd_build(list(string) args) {
         
         i = i + 1;
     }
-    int te1 = time();
-    print("[time] emit: " + string(te1 - te0) + "ms (" + string(emitted_count) + " emitted)");
+    int te_b = time();
+    print("[time] emit: " + string(te_b - te_a) + "ms (" + string(emitted_count) + " emitted)");
 
     # -- Compile pass: compile all newly emitted .c files --
-    int tc0 = time();
+    int tc_a = time();
     mutable int ci = 0;
     while ci < to_c_paths.len() {
         string c_path = to_c_paths.get(ci);
@@ -187,8 +187,8 @@ void cmd_build(list(string) args) {
         }
         ci = ci + 1;
     }
-    int tc1 = time();
-    print("[time] total compile pass: " + string(tc1 - tc0) + "ms");
+    int tc_b = time();
+    print("[time] total compile pass: " + string(tc_b - tc_a) + "ms");
 
     print(gray("  compiled: ") + string(compiled) + gray(" emitted: ") + string(emitted_count));
 
