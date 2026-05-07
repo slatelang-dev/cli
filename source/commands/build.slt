@@ -85,7 +85,17 @@ void cmd_build(list(string) args) {
     string source_dir = "source";
     int tg = time();
     list(ModuleStub) stubs = discover_modules(entry.ast, source_dir, empty);
-    stubs = stubs.add(ModuleStub(name: p.name, path: p.entry));
+    mutable bool entry_already_found = false;
+    mutable int si = 0;
+    while si < stubs.len() {
+        if stubs.get(si).path == p.entry {
+            entry_already_found = true;
+        }
+        si = si + 1;
+    }
+    if entry_already_found == false {
+        stubs = stubs.add(ModuleStub(name: p.name, path: p.entry));
+    }
     int th = time();
     print("[time] discover_modules: " + string(th - tg) + "ms (" + string(stubs.len()) + " modules)");
     print(gray("  ✓ modules discovered"));
