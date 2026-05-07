@@ -91,6 +91,7 @@ void cmd_build(list(string) args) {
     print(gray("  ✓ modules collected"));
 
     int ti = time();
+    modules = parse_modules(modules);
     Registry reg = build_registry_from_modules(modules);
     int tj = time();
     print("[time] build_registry: " + string(tj - ti) + "ms");
