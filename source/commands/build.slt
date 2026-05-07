@@ -105,9 +105,9 @@ void cmd_build(list(string) args) {
     mutable int emitted_count = 0;
 
     list(LoadedModule) ordered = reverse_modules(modules);
-    print("[debug] ordered len: " + string(ordered.len()));
+    print("[DEBUG - " + string(time() - ta) + "ms] ordered len: " + string(ordered.len()));
     LoadedModule first = ordered.get(0);
-    print("[debug] first: " + first.name + " ast children: " + string(first.ast.children.len()));
+    print("[DEBUG - " + string(time() - ta) + "ms] first: " + first.name + " ast children: " + string(first.ast.children.len()));
 
     # -- Emit pass: walk all modules, write .c files --
     mutable list(string) to_c_paths = empty;
@@ -137,9 +137,9 @@ void cmd_build(list(string) args) {
         }
 
         if needs_compile {
-            print("[debug] emitting: " + mod_name);
-            string c_code = walk_module_from_source(m.source, reg);
-            print("[debug] c_code len: " + string(c_code.len()));
+            print("[DEBUG - " + string(time() - ta) + "ms] emitting: " + mod_name);
+            string c_code = walk_module_from_source(mod_name, m.source, reg);
+            print("[DEBUG - " + string(time() - ta) + "ms] c_code len: " + string(c_code.len()));
             if c_code.len() > 0 {
                 file(c_path).write(c_code);
                 to_c_paths = to_c_paths.add(c_path);
@@ -170,7 +170,7 @@ void cmd_build(list(string) args) {
         string source_hash = to_hashes.get(ci);
         string obj_path = cache_dir + mod_path.hash() + ".o";
 
-        print("[debug] compiling: " + mod_name);
+        print("[DEBUG - " + string(time() - ta) + "ms] compiling: " + mod_name);
         int tw = time();
         string runtime_dir = home() + "/.slate/deps/runtime/";
         run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
