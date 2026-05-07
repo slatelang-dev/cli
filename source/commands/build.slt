@@ -137,7 +137,7 @@ void cmd_build(list(string) args) {
 
         if needs_compile {
             print("[debug] emitting: " + mod_name);
-            string c_code = walk_module(m.ast, reg);
+            string c_code = walk_module_from_source(m.source, reg);
             print("[debug] c_code len: " + string(c_code.len()));
             if c_code.len() > 0 {
                 file(c_path).write(c_code);
