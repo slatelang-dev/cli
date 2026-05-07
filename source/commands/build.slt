@@ -106,9 +106,8 @@ void cmd_build(list(string) args) {
 
     list(LoadedModule) ordered = reverse_modules(modules);
     print("[debug] ordered len: " + string(ordered.len()));
-    print("[debug] first: " + ordered.get(0).name + " ast children: " + string(ordered.get(0).ast.children.len()));
 
-    # ── Emit pass: walk all modules, write .c files ─────────────────────────
+    # -- Emit pass: walk all modules, write .c files --
     mutable list(string) to_c_paths = empty;
     mutable list(string) to_mod_names = empty;
     mutable list(string) to_mod_paths = empty;
@@ -159,7 +158,7 @@ void cmd_build(list(string) args) {
     int te1 = time();
     print("[time] emit: " + string(te1 - te0) + "ms (" + string(emitted_count) + " emitted)");
 
-    # ── Compile pass: compile all newly emitted .c files ────────────────────
+    # -- Compile pass: compile all newly emitted .c files --
     int tc0 = time();
     mutable int ci = 0;
     while ci < to_c_paths.len() {
