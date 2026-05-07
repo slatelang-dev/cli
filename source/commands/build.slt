@@ -55,8 +55,8 @@ void cmd_build(list(string) args) {
     int td = time();
     print("[time] load_entry (full): " + string(td - tc) + "ms");
 
-    if entry.loaded == false {
-        print(red("error") + ": " + entry.load_error);
+    if entry.success == false {
+        print(red("error") + ": " + entry.error);
         return;
     }
     print(gray("  ✓ entry loaded"));
