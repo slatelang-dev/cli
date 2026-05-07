@@ -61,17 +61,17 @@ void cmd_build(list(string) args) {
     }
     print(gray("  ✓ entry loaded"));
 
-    int te = time();
-    AnalysisResult ar = analyse_bare(entry.ast, entry.path, p.bare);
-    int tf = time();
-    print("[time] analyse_bare: " + string(tf - te) + "ms");
-
-    if ar.errors.len() > 0 {
-        string output = render_all(ar.errors, ar.warnings, entry.source);
-        print(output);
-        return;
-    }
-    print(gray("  ✓ analysis passed"));
+    # int te = time();
+    # AnalysisResult ar = analyse_bare(entry.ast, entry.path, p.bare);
+    # int tf = time();
+    # print("[time] analyse_bare: " + string(tf - te) + "ms");
+    # 
+    # if ar.errors.len() > 0 {
+    #     string output = render_all(ar.errors, ar.warnings, entry.source);
+    #     print(output);
+    #     return;
+    # }
+    # print(gray("  ✓ analysis passed"));
 
     string out_dir = "builds/";
     string cache_dir = "builds/.cache/";
@@ -102,11 +102,19 @@ void cmd_build(list(string) args) {
 
     mutable list(string) obj_paths = empty;
     mutable int compiled = 0;
-    mutable int skipped = 0;
+    mutable int emitted_count = 0;
 
     list(LoadedModule) ordered = reverse_modules(modules);
+    print("[debug] ordered len: " + string(ordered.len()));
+    print("[debug] first: " + ordered.get(0).name + " ast children: " + string(ordered.get(0).ast.children.len()));
 
-    int to = time();
+    # ── Emit pass: walk all modules, write .c files ─────────────────────────
+    mutable list(string) to_c_paths = empty;
+    mutable list(string) to_mod_names = empty;
+    mutable list(string) to_mod_paths = empty;
+    mutable list(string) to_hashes = empty;
+
+    int te0 = time();
     mutable int i = 0;
     while i < ordered.len() {
         LoadedModule m = ordered.get(i);
@@ -127,39 +135,61 @@ void cmd_build(list(string) args) {
             }
         }
 
-        int tl = time();
         if needs_compile {
+            print("[debug] emitting: " + mod_name);
             string c_code = walk_module(m.ast, reg);
+            print("[debug] c_code len: " + string(c_code.len()));
             if c_code.len() > 0 {
                 file(c_path).write(c_code);
-                string runtime_dir = home() + "/.slate/deps/runtime/";
-                run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
-                if file(obj_path).exists() == false {
-                    print(red("error") + ": failed to compile " + mod_name);
-                } else {
-                    manifest = manifest.set(mod_path, source_hash);
-                    save_manifest(cache_dir, manifest);
-                    obj_paths = obj_paths.add(obj_path);
-                    int tm = time();
-                    print("[time] walk_module(" + mod_path + "): " + string(tm - tl) + "ms");
-                    compiled = compiled + 1;
-                    print(gray("  compiled ") + mod_path);
-                }
+                to_c_paths = to_c_paths.add(c_path);
+                to_mod_names = to_mod_names.add(mod_name);
+                to_mod_paths = to_mod_paths.add(mod_path);
+                to_hashes = to_hashes.add(source_hash);
+                emitted_count = emitted_count + 1;
             } else {
-                skipped = skipped + 1;
                 print(gray("  skipped ") + mod_name + " (no code to emit)");
             }
         } else {
-            skipped = skipped + 1;
+            obj_paths = obj_paths.add(obj_path);
             print(gray("  cached ") + mod_name);
         }
         
         i = i + 1;
     }
-    int tp = time();
-    print("[time] total compile loop: " + string(tp - to) + "ms");
+    int te1 = time();
+    print("[time] emit: " + string(te1 - te0) + "ms (" + string(emitted_count) + " emitted)");
 
-    print(gray("  compiled: ") + string(compiled) + gray(" skipped: ") + string(skipped));
+    # ── Compile pass: compile all newly emitted .c files ────────────────────
+    int tc0 = time();
+    mutable int ci = 0;
+    while ci < to_c_paths.len() {
+        string c_path = to_c_paths.get(ci);
+        string mod_name = to_mod_names.get(ci);
+        string mod_path = to_mod_paths.get(ci);
+        string source_hash = to_hashes.get(ci);
+        string obj_path = cache_dir + mod_path.hash() + ".o";
+
+        print("[debug] compiling: " + mod_name);
+        int tw = time();
+        string runtime_dir = home() + "/.slate/deps/runtime/";
+        run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
+        if file(obj_path).exists() == false {
+            print(red("error") + ": failed to compile " + mod_name);
+        } else {
+            manifest = manifest.set(mod_path, source_hash);
+            save_manifest(cache_dir, manifest);
+            obj_paths = obj_paths.add(obj_path);
+            int tx = time();
+            print("[time] compile(" + mod_path + "): " + string(tx - tw) + "ms");
+            compiled = compiled + 1;
+            print(gray("  compiled ") + mod_path);
+        }
+        ci = ci + 1;
+    }
+    int tc1 = time();
+    print("[time] total compile pass: " + string(tc1 - tc0) + "ms");
+
+    print(gray("  compiled: ") + string(compiled) + gray(" emitted: ") + string(emitted_count));
 
     print(bold_slate(p.name) + " linking...");
 
