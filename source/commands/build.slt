@@ -104,10 +104,12 @@ void cmd_build(list(string) args) {
     mutable int compiled = 0;
     mutable int skipped = 0;
 
+    list(LoadedModule) ordered = reverse_modules(modules);
+
     int to = time();
     mutable int i = 0;
-    while i < modules.len() {
-        LoadedModule m = modules.get(i);
+    while i < ordered.len() {
+        LoadedModule m = ordered.get(i);
         string mod_name = m.name;
         string mod_path = m.path;
         string source_content = m.source;
