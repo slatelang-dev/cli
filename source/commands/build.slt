@@ -136,15 +136,15 @@ void cmd_build(list(string) args) {
                 run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
                 if file(obj_path).exists() == false {
                     print(red("error") + ": failed to compile " + mod_name);
-                    return;
+                } else {
+                    manifest = manifest.set(mod_path, source_hash);
+                    save_manifest(cache_dir, manifest);
+                    obj_paths = obj_paths.add(obj_path);
+                    int tm = time();
+                    print("[time] walk_module(" + mod_path + "): " + string(tm - tl) + "ms");
+                    compiled = compiled + 1;
+                    print(gray("  compiled ") + mod_path);
                 }
-                manifest = manifest.set(mod_path, source_hash);
-                save_manifest(cache_dir, manifest);
-                obj_paths = obj_paths.add(obj_path);
-                int tm = time();
-                print("[time] walk_module(" + mod_path + "): " + string(tm - tl) + "ms");
-                compiled = compiled + 1;
-                print(gray("  compiled ") + mod_path);
             } else {
                 skipped = skipped + 1;
                 print(gray("  skipped ") + mod_name + " (no code to emit)");
