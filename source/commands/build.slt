@@ -84,8 +84,8 @@ void cmd_build(list(string) args) {
 
     string source_dir = "source";
     int tg = time();
-    mutable list(ModuleInfo) modules = collect_module_asts(entry.ast, source_dir, empty);
-    modules = modules.add(ModuleInfo(path: p.entry, name: "main"));
+    mutable list(LoadedModule) modules = collect_module_asts(entry.ast, source_dir, empty);
+    modules = modules.add(load_entry(p));
     int th = time();
     print("[time] collect_module_asts: " + string(th - tg) + "ms (" + string(modules.len()) + " modules)");
     print(gray("  ✓ modules collected"));
@@ -102,10 +102,10 @@ void cmd_build(list(string) args) {
     int tk = time();
     mutable int i = 0;
     while i < modules.len() {
-        ModuleInfo mod_info = modules.get(i);
-        string mod_name = mod_info.name;
-        string mod_path = mod_info.path;
-        string source_content = file(mod_path).read();
+        LoadedModule mod = modules.get(i);
+        string mod_name = mod.name;
+        string mod_path = mod.path;
+        string source_content = mod.source;
         string source_hash = source_content.hash();
 
         string obj_path = cache_dir + mod_path.hash() + ".o";
@@ -122,8 +122,7 @@ void cmd_build(list(string) args) {
 
         int tl = time();
         if needs_compile {
-            LoadedModule m = load_module(mod_name, mod_path);
-            string c_code = walk_module(m.ast, reg);
+            string c_code = walk_module(mod.ast, reg);
             if c_code.len() > 0 {
                 file(c_path).write(c_code);
                 string runtime_dir = home() + "/.slate/deps/runtime/";
