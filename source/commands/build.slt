@@ -84,23 +84,27 @@ void cmd_build(list(string) args) {
 
     string source_dir = "source";
     int tg = time();
-    mutable list(LoadedModule) modules = collect_module_asts(entry.ast, source_dir, empty);
-    modules = modules.add(load_entry(p));
+    list(ModuleStub) stubs = discover_modules(entry.ast, source_dir, empty);
+    stubs = stubs.add(ModuleStub(name: p.name, path: p.entry));
     int th = time();
-    print("[time] collect_module_asts: " + string(th - tg) + "ms (" + string(modules.len()) + " modules)");
-    print(gray("  ✓ modules collected"));
+    print("[time] discover_modules: " + string(th - tg) + "ms (" + string(stubs.len()) + " modules)");
+    print(gray("  ✓ modules discovered"));
 
-    int ti = time();
-    modules = parse_modules(modules);
-    Registry reg = build_registry_from_modules(modules);
     int tj = time();
-    print("[time] build_registry: " + string(tj - ti) + "ms");
+    mutable list(LoadedModule) modules = load_modules(stubs);
+    int tk = time();
+    print("[time] load_modules: " + string(tk - tj) + "ms");
+
+    int tl = time();
+    Registry reg = build_registry_from_modules(modules);
+    int tm = time();
+    print("[time] build_registry: " + string(tm - tl) + "ms");
 
     mutable list(string) obj_paths = empty;
     mutable int compiled = 0;
     mutable int skipped = 0;
 
-    int tk = time();
+    int to = time();
     mutable int i = 0;
     while i < modules.len() {
         LoadedModule m = modules.get(i);
@@ -150,14 +154,14 @@ void cmd_build(list(string) args) {
         
         i = i + 1;
     }
-    int tn = time();
-    print("[time] total compile loop: " + string(tn - tk) + "ms");
+    int tp = time();
+    print("[time] total compile loop: " + string(tp - to) + "ms");
 
     print(gray("  compiled: ") + string(compiled) + gray(" skipped: ") + string(skipped));
 
     print(bold_slate(p.name) + " linking...");
 
-    int to = time();
+    int tlink = time();
     mutable list(string) link_args = ("clang",);
     mutable int ci = 0;
     while ci < obj_paths.len() {
@@ -167,8 +171,8 @@ void cmd_build(list(string) args) {
     link_args = link_args.add("-o");
     link_args = link_args.add(bin_path);
     run(link_args);
-    int tp = time();
-    print("[time] link: " + string(tp - to) + "ms");
+    int tpend = time();
+    print("[time] link: " + string(tpend - tlink) + "ms");
 
     int tz = time();
     print("[time] total build: " + string(tz - ta) + "ms");
