@@ -84,7 +84,7 @@ void cmd_build(list(string) args) {
 
     string source_dir = "source";
     int tg = time();
-    list(ModuleStub) stubs = discover_modules(entry.ast, source_dir, empty);
+    mutable list(ModuleStub) stubs = discover_modules(entry.ast, source_dir, empty);
     mutable bool entry_already_found = false;
     mutable int si = 0;
     while si < stubs.len() {
@@ -136,7 +136,7 @@ void cmd_build(list(string) args) {
 
     # -- Header pass: forward decls, structs, enums, fn prototypes for slate_fwd.h --
     mutable string header_content = "#ifndef SLATE_FWD_H\n#define SLATE_FWD_H\n\n#include \"slate_runtime.h\"\n\n";
-    bool has_any_headers = false;
+    mutable bool has_any_headers = false;
 
     # Forward declarations for all registered struct types
     list(string) struct_names = reg.struct_names.keys();
@@ -219,7 +219,7 @@ void cmd_build(list(string) args) {
 
         if needs_compile {
             print("[DEBUG - " + string(time() - ta) + "ms] emitting: " + mod_name);
-            string c_code = "";
+            mutable string c_code = "";
             if parsed_asts.has(m.path) {
                 Node parsed = parsed_asts.get(m.path);
                 c_code = walk_module(parsed, reg);
