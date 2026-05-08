@@ -148,7 +148,7 @@ void cmd_build(list(string) args) {
     }
     header_content = header_content + "\n";
 
-    # Collect all enums, then structs, then fn prototypes from all modules
+    # Collect all enums, then structs, then fn prototypes (deduped) from all modules
     mutable string all_structs = "";
     mutable string all_enums = "";
     mutable string all_fns = "";
@@ -168,10 +168,18 @@ void cmd_build(list(string) args) {
                 all_structs = all_structs + s + "\n";
                 has_any_headers = true;
             }
-            string f = emit_fn_prototypes_only(parsed, seen_fn_names);
-            if f.len() > 0 {
-                all_fns = all_fns + f;
-                has_any_headers = true;
+            mutable int ci = 0;
+            while ci < parsed.children.len() {
+                Node decl = parsed.children.get(ci);
+                if decl.kind == NodeKind.FnDecl {
+                    string fn_name = decl.value;
+                    if seen_fn_names.contains("|" + fn_name + "|") == false {
+                        all_fns = all_fns + emit_fn_prototype(decl);
+                        seen_fn_names = seen_fn_names + "|" + fn_name + "|";
+                        has_any_headers = true;
+                    }
+                }
+                ci = ci + 1;
             }
         }
         hi = hi + 1;
