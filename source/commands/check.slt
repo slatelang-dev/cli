@@ -3,22 +3,35 @@ module check;
 use slate;
 
 void cmd_check(list(string) args) {
-    if args.len() < 2 {
+    mutable string path = "";
+    if args.len() >= 2 {
+        path = args.get(1);
+    }
+
+    mutable bool is_bare = false;
+    if file("slate.toml").exists() {
+        Project p = load_project_file();
+        is_bare = p.bare;
+        if path == "" {
+            if project_valid(p) == false {
+                print(red("error") + ": invalid slate.toml — missing name or entry");
+                return;
+            }
+            path = p.entry;
+        }
+    }
+
+    if path == "" {
         print("slate check: no file given.");
         print("usage: slate check <file>");
         return;
     }
-    string path = args.get(1);
+
     string source = file(path).read();
     ParseResult result = parse(source);
     if result.success == false {
         print(red("parse error: ") + result.message);
         return;
-    }
-    mutable bool is_bare = false;
-    if file("slate.toml").exists() {
-        Project p = load_project_file();
-        is_bare = p.bare;
     }
     AnalysisResult ar = analyse_bare(result.node, path, is_bare);
     string output = render_all(ar.errors, ar.warnings, source);
