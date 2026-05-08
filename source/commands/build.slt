@@ -148,26 +148,27 @@ void cmd_build(list(string) args) {
     }
     header_content = header_content + "\n";
 
-    # Collect all struct definitions, then enums, then fn prototypes from all modules
+    # Collect all enums, then structs, then fn prototypes from all modules
     mutable string all_structs = "";
     mutable string all_enums = "";
     mutable string all_fns = "";
+    mutable string seen_fn_names = "";
     mutable int hi = 0;
     while hi < ordered.len() {
         LoadedModule m = ordered.get(hi);
         if parsed_asts.has(m.path) {
             Node parsed = parsed_asts.get(m.path);
-            string s = emit_structs_only(parsed);
-            if s.len() > 0 {
-                all_structs = all_structs + s + "\n";
-                has_any_headers = true;
-            }
             string e = emit_enums_only(parsed, reg);
             if e.len() > 0 {
                 all_enums = all_enums + e + "\n";
                 has_any_headers = true;
             }
-            string f = emit_fn_prototypes_only(parsed);
+            string s = emit_structs_only(parsed);
+            if s.len() > 0 {
+                all_structs = all_structs + s + "\n";
+                has_any_headers = true;
+            }
+            string f = emit_fn_prototypes_only(parsed, seen_fn_names);
             if f.len() > 0 {
                 all_fns = all_fns + f;
                 has_any_headers = true;
@@ -175,7 +176,7 @@ void cmd_build(list(string) args) {
         }
         hi = hi + 1;
     }
-    header_content = header_content + all_structs + all_enums + all_fns;
+    header_content = header_content + all_enums + all_structs + all_fns;
     header_content = header_content + "#endif // SLATE_FWD_H\n";
     if has_any_headers {
         file(cache_dir + "slate_fwd.h").write(header_content);
