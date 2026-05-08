@@ -134,22 +134,48 @@ void cmd_build(list(string) args) {
     LoadedModule first = ordered.get(0);
     print("[DEBUG - " + string(time() - ta) + "ms] first: " + first.name + " ast children: " + string(first.ast.children.len()));
 
-    # -- Header pass: collect structs, enums, fn prototypes for slate_fwd.h --
+    # -- Header pass: forward decls, structs, enums, fn prototypes for slate_fwd.h --
     mutable string header_content = "#ifndef SLATE_FWD_H\n#define SLATE_FWD_H\n\n#include \"slate_runtime.h\"\n\n";
     bool has_any_headers = false;
+
+    # Forward declarations for all registered struct types
+    list(string) struct_names = reg.struct_names.keys();
+    mutable int si = 0;
+    while si < struct_names.len() {
+        string sname = struct_names.get(si);
+        header_content = header_content + "typedef struct slate_" + sname + " slate_" + sname + ";\n";
+        si = si + 1;
+    }
+    header_content = header_content + "\n";
+
+    # Collect all struct definitions, then enums, then fn prototypes from all modules
+    mutable string all_structs = "";
+    mutable string all_enums = "";
+    mutable string all_fns = "";
     mutable int hi = 0;
     while hi < ordered.len() {
         LoadedModule m = ordered.get(hi);
         if parsed_asts.has(m.path) {
             Node parsed = parsed_asts.get(m.path);
-            string h = emit_header(parsed, reg);
-            if h.len() > 0 {
-                header_content = header_content + h + "\n";
+            string s = emit_structs_only(parsed);
+            if s.len() > 0 {
+                all_structs = all_structs + s + "\n";
+                has_any_headers = true;
+            }
+            string e = emit_enums_only(parsed, reg);
+            if e.len() > 0 {
+                all_enums = all_enums + e + "\n";
+                has_any_headers = true;
+            }
+            string f = emit_fn_prototypes_only(parsed);
+            if f.len() > 0 {
+                all_fns = all_fns + f;
                 has_any_headers = true;
             }
         }
         hi = hi + 1;
     }
+    header_content = header_content + all_structs + all_enums + all_fns;
     header_content = header_content + "#endif // SLATE_FWD_H\n";
     if has_any_headers {
         file(cache_dir + "slate_fwd.h").write(header_content);
