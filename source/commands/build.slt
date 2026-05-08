@@ -134,6 +134,27 @@ void cmd_build(list(string) args) {
     LoadedModule first = ordered.get(0);
     print("[DEBUG - " + string(time() - ta) + "ms] first: " + first.name + " ast children: " + string(first.ast.children.len()));
 
+    # -- Header pass: collect structs, enums, fn prototypes for slate_fwd.h --
+    mutable string header_content = "#ifndef SLATE_FWD_H\n#define SLATE_FWD_H\n\n#include \"slate_runtime.h\"\n\n";
+    bool has_any_headers = false;
+    mutable int hi = 0;
+    while hi < ordered.len() {
+        LoadedModule m = ordered.get(hi);
+        if parsed_asts.has(m.path) {
+            Node parsed = parsed_asts.get(m.path);
+            string h = emit_header(parsed, reg);
+            if h.len() > 0 {
+                header_content = header_content + h + "\n";
+                has_any_headers = true;
+            }
+        }
+        hi = hi + 1;
+    }
+    header_content = header_content + "#endif // SLATE_FWD_H\n";
+    if has_any_headers {
+        file(cache_dir + "slate_fwd.h").write(header_content);
+    }
+
     # -- Emit pass: walk all modules, write .c files --
     mutable list(string) to_c_paths = empty;
     mutable list(string) to_mod_names = empty;
