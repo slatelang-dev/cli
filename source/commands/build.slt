@@ -106,9 +106,24 @@ void cmd_build(list(string) args) {
     print("[time] load_modules: " + string(tk - tj) + "ms");
 
     int tl = time();
-    Registry reg = build_registry_from_modules(modules);
+    mutable table(string, Node) parsed_asts = empty;
+    mutable Registry reg = seed_c_runtime(new_registry());
+    mutable int pi = 0;
+    while pi < modules.len() {
+        LoadedModule m = modules.get(pi);
+        if m.success {
+            ParseResult p = parse(m.source);
+            if p.success {
+                reg = register_program(reg, p.node);
+                parsed_asts = parsed_asts.set(m.path, p.node);
+            } else {
+                print(red("error") + ": " + m.name + ": " + p.message);
+            }
+        }
+        pi = pi + 1;
+    }
     int tm = time();
-    print("[time] build_registry: " + string(tm - tl) + "ms");
+    print("[time] parse + registry: " + string(tm - tl) + "ms (" + string(parsed_asts.len()) + " modules)");
 
     mutable list(string) obj_paths = empty;
     mutable int compiled = 0;
@@ -148,7 +163,11 @@ void cmd_build(list(string) args) {
 
         if needs_compile {
             print("[DEBUG - " + string(time() - ta) + "ms] emitting: " + mod_name);
-            string c_code = walk_module_from_source(mod_name, m.source, reg);
+            string c_code = "";
+            if parsed_asts.has(m.path) {
+                Node parsed = parsed_asts.get(m.path);
+                c_code = walk_module(parsed, reg);
+            }
             print("[DEBUG - " + string(time() - ta) + "ms] c_code len: " + string(c_code.len()));
             if c_code.len() > 0 {
                 file(c_path).write(c_code);
