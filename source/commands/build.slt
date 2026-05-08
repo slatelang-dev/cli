@@ -210,8 +210,17 @@ void cmd_build(list(string) args) {
     int te_b = time();
     print("[time] emit: " + string(te_b - te_a) + "ms (" + string(emitted_count) + " emitted)");
 
+    # Save manifest after emit pass to track emitted source hashes
+    mutable int mi = 0;
+    while mi < to_c_paths.len() {
+        manifest = manifest.set(to_mod_paths.get(mi), to_hashes.get(mi));
+        mi = mi + 1;
+    }
+    save_manifest(cache_dir, manifest);
+
     # -- Compile pass: compile all newly emitted .c files --
     int tc_a = time();
+    string runtime_dir = home() + "/.slate/deps/runtime/";
     mutable int ci = 0;
     while ci < to_c_paths.len() {
         string c_path = to_c_paths.get(ci);
@@ -222,13 +231,10 @@ void cmd_build(list(string) args) {
 
         print("[DEBUG - " + string(time() - ta) + "ms] compiling: " + mod_name);
         int tw = time();
-        string runtime_dir = home() + "/.slate/deps/runtime/";
         run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
         if file(obj_path).exists() == false {
             print(red("error") + ": failed to compile " + mod_name);
         } else {
-            manifest = manifest.set(mod_path, source_hash);
-            save_manifest(cache_dir, manifest);
             obj_paths = obj_paths.add(obj_path);
             int tx = time();
             print("[time] compile(" + mod_path + "): " + string(tx - tw) + "ms");
