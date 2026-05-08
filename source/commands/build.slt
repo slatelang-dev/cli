@@ -163,7 +163,7 @@ void cmd_build(list(string) args) {
                 all_enums = all_enums + e + "\n";
                 has_any_headers = true;
             }
-            string s = emit_structs_only(parsed);
+            string s = emit_structs_only(parsed, reg);
             if s.len() > 0 {
                 all_structs = all_structs + s + "\n";
                 has_any_headers = true;
@@ -174,7 +174,7 @@ void cmd_build(list(string) args) {
                 if decl.kind == NodeKind.FnDecl {
                     string fn_name = decl.value;
                     if seen_fn_names.contains("|" + fn_name + "|") == false {
-                        all_fns = all_fns + emit_fn_prototype(decl);
+                        all_fns = all_fns + emit_fn_prototype(decl, reg);
                         seen_fn_names = seen_fn_names + "|" + fn_name + "|";
                         has_any_headers = true;
                     }
