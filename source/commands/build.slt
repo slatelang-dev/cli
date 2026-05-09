@@ -109,11 +109,11 @@ void cmd_build(list(string) args) {
 
     # Forward declarations for all registered struct types
     list(string) struct_names = reg.struct_names.keys();
-    mutable int si = 0;
-    while si < struct_names.len() {
-        string sname = struct_names.get(si);
+    mutable int sni = 0;
+    while sni < struct_names.len() {
+        string sname = struct_names.get(sni);
         header_content = header_content + "typedef struct slate_" + sname + " slate_" + sname + ";\n";
-        si = si + 1;
+        sni = sni + 1;
     }
     header_content = header_content + "\n";
 
