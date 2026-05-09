@@ -1,36 +1,6 @@
 module check;
 
 use slate;
-use compiler;
-
-Scope register_symbols_no_use(Node program, Scope scope) {
-    mutable Scope s = scope;
-    mutable int i = 0;
-    while i < program.children.len() {
-        Node decl = program.children.get(i);
-        if decl.kind == NodeKind.FnDecl {
-            Node return_type = decl.children.get(0);
-            Symbol sym = make_fn_symbol(decl.value, return_type.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(s, decl.value) == false {
-                s = declare_symbol(s, sym);
-            }
-        }
-        if decl.kind == NodeKind.StructDecl {
-            Symbol sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(s, decl.value) == false {
-                s = declare_symbol(s, sym);
-            }
-        }
-        if decl.kind == NodeKind.EnumDecl {
-            Symbol sym = make_fn_symbol(decl.value, decl.value, decl.line, decl.col);
-            if symbol_exists_in_current_scope(s, decl.value) == false {
-                s = declare_symbol(s, sym);
-            }
-        }
-        i += 1;
-    }
-    return s;
-}
 
 void cmd_check(list(string) args) {
     mutable string path = "";
@@ -39,7 +9,6 @@ void cmd_check(list(string) args) {
     }
 
     mutable bool is_bare = false;
-    mutable string base_path = "source";
 
     if file("slate.toml").exists() {
         Project p = load_project_file();
@@ -59,9 +28,6 @@ void cmd_check(list(string) args) {
         return;
     }
 
-    string parent_dir = resolve_parent(path);
-    if parent_dir != "" { base_path = parent_dir; }
-
     string source = file(path).read();
     ParseResult result = parse(source);
     if result.success == false {
@@ -69,66 +35,7 @@ void cmd_check(list(string) args) {
         return;
     }
 
-    int t_start = time();
-    list(ModuleStub) stubs = discover_modules(result.node, base_path, empty);
-    list(LoadedModule) loaded = load_modules(stubs);
-    list(LoadedModule) ordered = reverse_modules(loaded);
-    int t_loaded = time();
-    print("[time] discover + load: " + string(t_loaded - t_start) + "ms (" + string(ordered.len()) + " modules)");
-
-    mutable table(string, Node) parsed = empty;
-    mutable int i = 0;
-    while i < ordered.len() {
-        LoadedModule cur = ordered.get(i);
-        if cur.success {
-            ParseResult pr = parse(cur.source);
-            if pr.success {
-                parsed = parsed.set(cur.path, pr.node);
-            }
-        }
-        i += 1;
-    }
-    int t_parsed = time();
-    print("[time] parse all: " + string(t_parsed - t_loaded) + "ms");
-
-    mutable Scope scope = seed_builtins(new_scope());
-    i = 0;
-    while i < ordered.len() {
-        LoadedModule cur = ordered.get(i);
-        if parsed.has(cur.path) {
-            scope = register_symbols_no_use(parsed.get(cur.path), scope);
-        }
-        i += 1;
-    }
-    scope = register_symbols_no_use(result.node, scope);
-    int t_regd = time();
-    print("[time] register symbols: " + string(t_regd - t_parsed) + "ms");
-
-    mutable AnalysisResult ar = analysis_ok();
-    mutable int j = 0;
-    while j < result.node.children.len() {
-        Node decl = result.node.children.get(j);
-        if decl.kind == NodeKind.FnDecl {
-            if is_bare == false {
-                Node return_type = decl.children.get(0);
-                if return_type.value == "ptr" {
-                    Span s = make_span(path, decl.line, decl.col, decl.value.len());
-                    AnalysisError err = make_error(
-                        ErrorKind.InvalidUse,
-                        "ptr type requires bare mode",
-                        "Add bare = true to your slate.toml to use ptr",
-                        s
-                    );
-                    ar = AnalysisResult(errors: ar.errors.add(err), warnings: ar.warnings);
-                }
-            }
-            ar = merge_analysis(ar, analyse_fn(decl, path, scope));
-        }
-        j += 1;
-    }
-    int t_analyz = time();
-    print("[time] body analysis: " + string(t_analyz - t_regd) + "ms");
-    print("[time] total: " + string(t_analyz - t_start) + "ms");
+    AnalysisResult ar = analyse_bare(result.node, path, is_bare);
 
     string output = render_all(ar.errors, ar.warnings, source);
     if output.len() > 0 {
