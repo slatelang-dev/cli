@@ -37,10 +37,7 @@ void save_manifest(string cache_dir, table(string, string) manifest) {
 }
 
 void cmd_build(list(string) args) {
-    int ta = time();
     Project p = load_project_file();
-    int tb = time();
-    print("[time] load_entry: " + string(tb - ta) + "ms");
 
     if project_valid(p) == false {
         print(red("error") + ": invalid or missing slate.toml");
@@ -48,30 +45,14 @@ void cmd_build(list(string) args) {
         return;
     }
 
-    print(bold_slate("slate") + " building " + bold(p.name) + "...");
+    print("Building " + p.name + "...");
 
-    int tc = time();
     LoadedModule entry = load_entry(p);
-    int td = time();
-    print("[time] load_entry (full): " + string(td - tc) + "ms");
 
     if entry.success == false {
         print(red("error") + ": " + entry.error);
         return;
     }
-    print(gray("  ✓ entry loaded"));
-
-    # int te = time();
-    # AnalysisResult ar = analyse_bare(entry.ast, entry.path, p.bare);
-    # int tf = time();
-    # print("[time] analyse_bare: " + string(tf - te) + "ms");
-    # 
-    # if ar.errors.len() > 0 {
-    #     string output = render_all(ar.errors, ar.warnings, entry.source);
-    #     print(output);
-    #     return;
-    # }
-    # print(gray("  ✓ analysis passed"));
 
     string out_dir = "builds/";
     string cache_dir = "builds/.cache/";
@@ -83,7 +64,6 @@ void cmd_build(list(string) args) {
     mutable table(string, string) manifest = load_manifest(cache_dir);
 
     string source_dir = "source";
-    int tg = time();
     mutable list(ModuleStub) stubs = discover_modules(entry.ast, source_dir, empty);
     mutable bool entry_already_found = false;
     mutable int si = 0;
@@ -96,16 +76,10 @@ void cmd_build(list(string) args) {
     if entry_already_found == false {
         stubs = stubs.add(ModuleStub(name: p.name, path: p.entry));
     }
-    int th = time();
-    print("[time] discover_modules: " + string(th - tg) + "ms (" + string(stubs.len()) + " modules)");
-    print(gray("  ✓ modules discovered"));
+    print("  modules discovered ✓");
 
-    int tj = time();
     mutable list(LoadedModule) modules = load_modules(stubs);
-    int tk = time();
-    print("[time] load_modules: " + string(tk - tj) + "ms");
 
-    int tl = time();
     mutable table(string, Node) parsed_asts = empty;
     mutable Registry reg = seed_c_runtime(new_registry());
     mutable int pi = 0;
@@ -122,17 +96,12 @@ void cmd_build(list(string) args) {
         }
         pi = pi + 1;
     }
-    int tm = time();
-    print("[time] parse + registry: " + string(tm - tl) + "ms (" + string(parsed_asts.len()) + " modules)");
 
     mutable list(string) obj_paths = empty;
     mutable int compiled = 0;
     mutable int emitted_count = 0;
 
     list(LoadedModule) ordered = reverse_modules(modules);
-    print("[DEBUG - " + string(time() - ta) + "ms] ordered len: " + string(ordered.len()));
-    LoadedModule first = ordered.get(0);
-    print("[DEBUG - " + string(time() - ta) + "ms] first: " + first.name + " ast children: " + string(first.ast.children.len()));
 
     # -- Header pass: forward decls, structs, enums, fn prototypes for slate_fwd.h --
     mutable string header_content = "#ifndef SLATE_FWD_H\n#define SLATE_FWD_H\n\n#include \"slate_runtime.h\"\n\n";
@@ -196,7 +165,6 @@ void cmd_build(list(string) args) {
     mutable list(string) to_mod_paths = empty;
     mutable list(string) to_hashes = empty;
 
-    int te_a = time();
     mutable int i = 0;
     while i < ordered.len() {
         LoadedModule m = ordered.get(i);
@@ -218,13 +186,12 @@ void cmd_build(list(string) args) {
         }
 
         if needs_compile {
-            print("[DEBUG - " + string(time() - ta) + "ms] emitting: " + mod_name);
+            print("  emitting " + mod_name + " ✓");
             mutable string c_code = "";
             if parsed_asts.has(m.path) {
                 Node parsed = parsed_asts.get(m.path);
                 c_code = walk_module(parsed, reg);
             }
-            print("[DEBUG - " + string(time() - ta) + "ms] c_code len: " + string(c_code.len()));
             if c_code.len() > 0 {
                 file(c_path).write(c_code);
                 to_c_paths = to_c_paths.add(c_path);
@@ -232,18 +199,13 @@ void cmd_build(list(string) args) {
                 to_mod_paths = to_mod_paths.add(mod_path);
                 to_hashes = to_hashes.add(source_hash);
                 emitted_count = emitted_count + 1;
-            } else {
-                print(gray("  skipped ") + mod_name + " (no code to emit)");
             }
         } else {
             obj_paths = obj_paths.add(obj_path);
-            print(gray("  cached ") + mod_name);
         }
-        
+
         i = i + 1;
     }
-    int te_b = time();
-    print("[time] emit: " + string(te_b - te_a) + "ms (" + string(emitted_count) + " emitted)");
 
     # Save manifest after emit pass to track emitted source hashes
     mutable int mi = 0;
@@ -254,55 +216,42 @@ void cmd_build(list(string) args) {
     save_manifest(cache_dir, manifest);
 
     # -- Compile pass: compile all newly emitted .c files --
-    int tc_a = time();
     string runtime_dir = home() + "/.slate/deps/runtime/";
     mutable int ci = 0;
     while ci < to_c_paths.len() {
         string c_path = to_c_paths.get(ci);
         string mod_name = to_mod_names.get(ci);
         string mod_path = to_mod_paths.get(ci);
-        string source_hash = to_hashes.get(ci);
         string obj_path = cache_dir + mod_path.hash() + ".o";
 
-        print("[DEBUG - " + string(time() - ta) + "ms] compiling: " + mod_name);
-        int tw = time();
         run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
         if file(obj_path).exists() == false {
-            print(red("error") + ": failed to compile " + mod_name);
+            print("  failed... " + mod_name + " ✗");
+            return;
         } else {
             obj_paths = obj_paths.add(obj_path);
-            int tx = time();
-            print("[time] compile(" + mod_path + "): " + string(tx - tw) + "ms");
             compiled = compiled + 1;
-            print(gray("  compiled ") + mod_path);
+            print("  compiling " + mod_name + " ✓");
         }
         ci = ci + 1;
     }
-    int tc_b = time();
-    print("[time] total compile pass: " + string(tc_b - tc_a) + "ms");
 
-    print(gray("  compiled: ") + string(compiled) + gray(" emitted: ") + string(emitted_count));
-
-    print(bold_slate(p.name) + " linking...");
-
-    int tlink = time();
-    string cmd = "clang";
-    mutable int ci = 0;
-    while ci < obj_paths.len() {
-        cmd = cmd + " " + obj_paths.get(ci);
-        ci = ci + 1;
+    # -- Link pass --
+    mutable list(string) link_args = empty;
+    link_args = link_args.add("clang");
+    mutable int li = 0;
+    while li < obj_paths.len() {
+        link_args = link_args.add(obj_paths.get(li));
+        li = li + 1;
     }
-    cmd = cmd + " -o " + bin_path;
-    run("sh", "-c", cmd);
-    int tpend = time();
-    print("[time] link: " + string(tpend - tlink) + "ms");
-
-    int tz = time();
-    print("[time] total build: " + string(tz - ta) + "ms");
+    link_args = link_args.add("-o");
+    link_args = link_args.add(bin_path);
+    run(link_args);
 
     if file(bin_path).exists() {
-        print(bold_green("built") + " " + bin_path + " ✓");
+        print("  linking... linked ✓");
+        print("built " + bin_path + " ✓");
     } else {
-        print(red("error") + ": compilation failed");
+        print("  failed... link ✗");
     }
 }
