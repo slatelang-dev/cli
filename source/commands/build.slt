@@ -237,5 +237,13 @@ void cmd_build(list(string) args) {
     }
 
     # -- Link pass --
-    run("clang builds/.cache/*.o -o " + bin_path);
+    print(gray("  linking..."));
+    run("sh", "-c", "clang builds/.cache/*.o -o " + bin_path + " 2>&1");
+
+    if file(bin_path).exists() {
+        print(gray("  linking... linked ✓"));
+        print(bold_green("built") + " " + bin_path + " ✓");
+    } else {
+        print(red("  failed... link ✗"));
+    }
 }
