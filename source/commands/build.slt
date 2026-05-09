@@ -237,21 +237,5 @@ void cmd_build(list(string) args) {
     }
 
     # -- Link pass --
-    mutable string link_cmd = "clang";
-    mutable int li = 0;
-    while li < obj_paths.len() {
-        link_cmd = link_cmd + " " + obj_paths.get(li);
-        li = li + 1;
-    }
-    link_cmd = link_cmd + " -o " + bin_path;
-    print(gray("  linking: " + link_cmd));
-    int status = run("sh", "-c", link_cmd);
-    print("status: " + string(status));
-
-    if file(bin_path).exists() {
-        print(gray("  linking... linked ✓"));
-        print(bold_green("built") + " " + bin_path + " ✓");
-    } else {
-        print(red("  failed... link ✗"));
-    }
+    run("clang builds/.cache/*.o -o " + bin_path);
 }
