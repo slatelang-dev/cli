@@ -45,7 +45,7 @@ void cmd_build(list(string) args) {
         return;
     }
 
-    print("Building " + p.name + "...");
+    print(bold("Building ") + bold_slate(p.name) + "...");
 
     LoadedModule entry = load_entry(p);
 
@@ -76,7 +76,7 @@ void cmd_build(list(string) args) {
     if entry_already_found == false {
         stubs = stubs.add(ModuleStub(name: p.name, path: p.entry));
     }
-    print("  modules discovered ✓");
+    print(gray("  modules discovered ✓"));
 
     mutable list(LoadedModule) modules = load_modules(stubs);
 
@@ -186,7 +186,7 @@ void cmd_build(list(string) args) {
         }
 
         if needs_compile {
-            print("  emitting " + mod_name + " ✓");
+            print(gray("  emitting " + mod_name + " ✓"));
             mutable string c_code = "";
             if parsed_asts.has(m.path) {
                 Node parsed = parsed_asts.get(m.path);
@@ -226,12 +226,12 @@ void cmd_build(list(string) args) {
 
         run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
         if file(obj_path).exists() == false {
-            print("  failed... " + mod_name + " ✗");
+            print(red("  failed... " + mod_name + " ✗"));
             return;
         } else {
             obj_paths = obj_paths.add(obj_path);
             compiled = compiled + 1;
-            print("  compiling " + mod_name + " ✓");
+            print(gray("  compiling " + mod_name + " ✓"));
         }
         ci = ci + 1;
     }
@@ -246,12 +246,12 @@ void cmd_build(list(string) args) {
     }
     link_args = link_args.add("-o");
     link_args = link_args.add(bin_path);
-    run(link_args);
+    int link_status = run(link_args);
 
     if file(bin_path).exists() {
-        print("  linking... linked ✓");
-        print("built " + bin_path + " ✓");
+        print(gray("  linking... linked ✓"));
+        print(bold_green("built") + " " + bin_path + " ✓");
     } else {
-        print("  failed... link ✗");
+        print(red("  failed... link(" + string(link_status) + ") ✗"));
     }
 }
