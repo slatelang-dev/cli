@@ -237,29 +237,20 @@ void cmd_build(list(string) args) {
     }
 
     # -- Link pass --
-    mutable list(string) link_args = empty;
-    link_args = link_args.add("clang");
+    mutable string link_cmd = "clang";
     mutable int li = 0;
     while li < obj_paths.len() {
-        link_args = link_args.add(obj_paths.get(li));
+        link_cmd = link_cmd + " " + obj_paths.get(li);
         li = li + 1;
     }
-    link_args = link_args.add("-o");
-    link_args = link_args.add(bin_path);
-    mutable string link_str = "";
-    mutable int lsi = 0;
-    while lsi < link_args.len() {
-        if lsi > 0 { link_str = link_str + " "; }
-        link_str = link_str + link_args.get(lsi);
-        lsi = lsi + 1;
-    }
-    print(gray("  linking: " + link_str));
-    int link_status = run(link_args);
+    link_cmd = link_cmd + " -o " + bin_path;
+    print(gray("  linking: " + link_cmd));
+    run("sh", "-c", link_cmd);
 
     if file(bin_path).exists() {
         print(gray("  linking... linked ✓"));
         print(bold_green("built") + " " + bin_path + " ✓");
     } else {
-        print(red("  failed... link(" + string(link_status) + ") ✗"));
+        print(red("  failed... link ✗"));
     }
 }
