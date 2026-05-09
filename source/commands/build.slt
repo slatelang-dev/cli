@@ -237,8 +237,9 @@ void cmd_build(list(string) args) {
     }
 
     # -- Link pass --
-    print(gray("  linking..."));
-    run("sh", "-c", "clang builds/.cache/*.o -o " + bin_path + " 2>&1");
+    print(gray("  linking: " + bin_path));
+    int link_status = run("sh", "-c", "clang builds/.cache/*.o -o " + bin_path);
+    print(gray("  link status: " + string(link_status)));
 
     if file(bin_path).exists() {
         print(gray("  linking... linked ✓"));
