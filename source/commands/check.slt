@@ -73,16 +73,10 @@ void cmd_check(list(string) args) {
         return;
     }
 
-    print("=== starting discover_modules ===");
     int t_start = time();
     list(ModuleStub) stubs = discover_modules(result.node, base_path, empty);
-    print("=== discover_modules done (" + string(stubs.len()) + " stubs) ===");
-    print("=== starting load_modules ===");
     list(LoadedModule) loaded = load_modules(stubs);
-    print("=== load_modules done (" + string(loaded.len()) + " modules) ===");
-    print("=== starting reverse_modules ===");
     list(LoadedModule) ordered = reverse_modules(loaded);
-    print("=== reverse_modules done ===");
     int t_loaded = time();
     print("[time] discover + load: " + string(t_loaded - t_start) + "ms (" + string(ordered.len()) + " modules)");
 
