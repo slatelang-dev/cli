@@ -246,12 +246,20 @@ void cmd_build(list(string) args) {
     }
     link_args = link_args.add("-o");
     link_args = link_args.add(bin_path);
-    int link_status = run(link_args);
+    mutable string link_str = "";
+    mutable int lsi = 0;
+    while lsi < link_args.len() {
+        if lsi > 0 { link_str = link_str + " "; }
+        link_str = link_str + link_args.get(lsi);
+        lsi = lsi + 1;
+    }
+    print(gray("  linking: " + link_str));
+    string link_status = run(link_args);
 
     if file(bin_path).exists() {
         print(gray("  linking... linked ✓"));
         print(bold_green("built") + " " + bin_path + " ✓");
     } else {
-        print(red("  failed... link(" + string(link_status) + ") ✗"));
+        print(red("  failed... link(" + link_status + ") ✗"));
     }
 }
