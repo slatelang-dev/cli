@@ -30,6 +30,7 @@ void cmd_test(list(string) args) {
     visited = visited.set(path, 1);
     mutable Scope scope = seed_builtins(new_scope());
     scope = register_transitive(result.node, base_path, scope, visited);
+    scope = push_scope(scope);
     scope = register_module_symbols(result.node, scope);
 
     mutable AnalysisResult ar = analysis_ok();
