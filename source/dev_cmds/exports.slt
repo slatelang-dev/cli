@@ -3,6 +3,7 @@ module dev_cmds;
 use run;
 use check;
 use build;
+use build_manifest;
 use test;
 use debug;
 use tidy;

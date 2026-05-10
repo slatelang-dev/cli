@@ -2,38 +2,112 @@ module build;
 
 use slate;
 use compiler;
+use build_manifest;
 
-table(string, string) load_manifest(string cache_dir) {
-    mutable table(string, string) m = empty;
-    string path = cache_dir + "manifest.toml";
-    if file(path).exists() {
-        string content = file(path).read();
-        list(string) lines = content.split("\n");
-        mutable int i = 0;
-        while i < lines.len() {
-            string line = lines.get(i);
-            if line.contains(" = ") {
-                list(string) parts = line.split(" = ");
-                if parts.len() >= 2 {
-                    m = m.set(parts.get(0), parts.get(1));
-                }
-            }
-            i = i + 1;
-        }
+void build_emit_headers(list(LoadedModule) ordered, table(string, Node) parsed_asts, Registry reg, string cache_dir) {
+    mutable string header_content = "#ifndef SLATE_FWD_H\n#define SLATE_FWD_H\n\n#include \"slate_runtime.h\"\n\n";
+    mutable bool has_any_headers = false;
+
+    list(string) struct_names = reg.struct_names.keys();
+    mutable int sni = 0;
+    while sni < struct_names.len() {
+        string sname = struct_names.get(sni);
+        header_content = header_content + "typedef struct slate_" + sname + " slate_" + sname + ";\n";
+        sni = sni + 1;
     }
-    return m;
+    header_content = header_content + "\n";
+
+    mutable string all_structs = "";
+    mutable string all_enums = "";
+    mutable string all_fns = "";
+    mutable string seen_fn_names = "";
+    mutable int hi = 0;
+    while hi < ordered.len() {
+        LoadedModule m = ordered.get(hi);
+        if parsed_asts.has(m.path) {
+            Node parsed = parsed_asts.get(m.path);
+            string e = emit_enums_only(parsed, reg);
+            if e.len() > 0 {
+                all_enums = all_enums + e + "\n";
+                has_any_headers = true;
+            }
+            string s = emit_structs_only(parsed, reg);
+            if s.len() > 0 {
+                all_structs = all_structs + s + "\n";
+                has_any_headers = true;
+            }
+            mutable int ci = 0;
+            while ci < parsed.children.len() {
+                Node decl = parsed.children.get(ci);
+                if decl.kind == NodeKind.FnDecl {
+                    string fn_name = decl.value;
+                    if seen_fn_names.contains("|" + fn_name + "|") == false {
+                        all_fns = all_fns + emit_fn_prototype(decl, reg);
+                        seen_fn_names = seen_fn_names + "|" + fn_name + "|";
+                        has_any_headers = true;
+                    }
+                }
+                ci = ci + 1;
+            }
+        }
+        hi = hi + 1;
+    }
+    header_content = header_content + all_enums + all_structs + all_fns;
+    header_content = header_content + "#endif // SLATE_FWD_H\n";
+    if has_any_headers {
+        file(cache_dir + "slate_fwd.h").write(header_content);
+    }
 }
 
-void save_manifest(string save_cache_dir, table(string, string) manifest) {
-    mutable string out = "";
-    list(string) keys = manifest.keys();
-    mutable int i = 0;
-    while i < keys.len() {
-        if out.len() > 0 { out = out + "\n"; }
-        out = out + keys.get(i) + " = " + manifest.get(keys.get(i));
-        i = i + 1;
+list(string) build_compile(list(string) to_c_paths, list(string) to_mod_names, list(string) to_mod_paths, string cache_dir, string runtime_dir, bool silent) {
+    mutable list(string) obj_paths = empty;
+    mutable int ci = 0;
+    while ci < to_c_paths.len() {
+        string c_path = to_c_paths.get(ci);
+        string mod_name = to_mod_names.get(ci);
+        string mod_path = to_mod_paths.get(ci);
+        string obj_path = cache_dir + mod_path.hash() + ".o";
+
+        run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
+        if file(obj_path).exists() == false {
+            print(red("  failed: " + mod_name + " ✗"));
+            print(gray("  clang -c " + c_path + " -o " + obj_path + " -O2 -fno-strict-aliasing -I " + runtime_dir));
+            return obj_paths;
+        } else {
+            obj_paths = obj_paths.add(obj_path);
+            if silent == false { print(gray("  compiling " + mod_name + " ✓")); }
+        }
+        ci = ci + 1;
     }
-    file(save_cache_dir + "manifest.toml").write(out);
+    return obj_paths;
+}
+
+bool build_link(list(string) obj_paths, string bin_path) {
+    mutable list(string) link_args = empty;
+    link_args = link_args.add("clang");
+    mutable int li = 0;
+    while li < obj_paths.len() {
+        link_args = link_args.add(obj_paths.get(li));
+        li = li + 1;
+    }
+    link_args = link_args.add("-o");
+    link_args = link_args.add(bin_path);
+    run(link_args);
+
+    if file(bin_path).exists() {
+        return true;
+    } else {
+        mutable string link_cmd = "";
+        mutable int lk = 0;
+        while lk < link_args.len() {
+            if lk > 0 { link_cmd = link_cmd + " "; }
+            link_cmd = link_cmd + link_args.get(lk);
+            lk = lk + 1;
+        }
+        print(red("  failed... link ✗"));
+        print(gray("  " + link_cmd));
+        return false;
+    }
 }
 
 void cmd_build(list(string) args, bool silent) {
@@ -86,84 +160,26 @@ void cmd_build(list(string) args, bool silent) {
     while pi < modules.len() {
         LoadedModule m = modules.get(pi);
         if m.success {
-            ParseResult p = parse(m.source);
-            if p.success {
-                reg = register_program(reg, p.node);
-                parsed_asts = parsed_asts.set(m.path, p.node);
+            ParseResult p_res = parse(m.source);
+            if p_res.success {
+                reg = register_program(reg, p_res.node);
+                parsed_asts = parsed_asts.set(m.path, p_res.node);
             } else {
-                print(red("error") + ": " + m.name + ": " + p.message);
+                print(red("error") + ": " + m.name + ": " + p_res.message);
             }
         }
         pi = pi + 1;
     }
 
     mutable list(string) obj_paths = empty;
-    mutable int compiled = 0;
-    mutable int emitted_count = 0;
-
-    list(LoadedModule) ordered = reverse_modules(modules);
-
-    # -- Header pass: forward decls, structs, enums, fn prototypes for slate_fwd.h --
-    mutable string header_content = "#ifndef SLATE_FWD_H\n#define SLATE_FWD_H\n\n#include \"slate_runtime.h\"\n\n";
-    mutable bool has_any_headers = false;
-
-    # Forward declarations for all registered struct types
-    list(string) struct_names = reg.struct_names.keys();
-    mutable int sni = 0;
-    while sni < struct_names.len() {
-        string sname = struct_names.get(sni);
-        header_content = header_content + "typedef struct slate_" + sname + " slate_" + sname + ";\n";
-        sni = sni + 1;
-    }
-    header_content = header_content + "\n";
-
-    # Collect all enums, then structs, then fn prototypes (deduped) from all modules
-    mutable string all_structs = "";
-    mutable string all_enums = "";
-    mutable string all_fns = "";
-    mutable string seen_fn_names = "";
-    mutable int hi = 0;
-    while hi < ordered.len() {
-        LoadedModule m = ordered.get(hi);
-        if parsed_asts.has(m.path) {
-            Node parsed = parsed_asts.get(m.path);
-            string e = emit_enums_only(parsed, reg);
-            if e.len() > 0 {
-                all_enums = all_enums + e + "\n";
-                has_any_headers = true;
-            }
-            string s = emit_structs_only(parsed, reg);
-            if s.len() > 0 {
-                all_structs = all_structs + s + "\n";
-                has_any_headers = true;
-            }
-            mutable int ci = 0;
-            while ci < parsed.children.len() {
-                Node decl = parsed.children.get(ci);
-                if decl.kind == NodeKind.FnDecl {
-                    string fn_name = decl.value;
-                    if seen_fn_names.contains("|" + fn_name + "|") == false {
-                        all_fns = all_fns + emit_fn_prototype(decl, reg);
-                        seen_fn_names = seen_fn_names + "|" + fn_name + "|";
-                        has_any_headers = true;
-                    }
-                }
-                ci = ci + 1;
-            }
-        }
-        hi = hi + 1;
-    }
-    header_content = header_content + all_enums + all_structs + all_fns;
-    header_content = header_content + "#endif // SLATE_FWD_H\n";
-    if has_any_headers {
-        file(cache_dir + "slate_fwd.h").write(header_content);
-    }
-
-    # -- Emit pass: walk all modules, write .c files --
     mutable list(string) to_c_paths = empty;
     mutable list(string) to_mod_names = empty;
     mutable list(string) to_mod_paths = empty;
     mutable list(string) to_hashes = empty;
+
+    list(LoadedModule) ordered = reverse_modules(modules);
+
+    build_emit_headers(ordered, parsed_asts, reg, cache_dir);
 
     mutable int i = 0;
     while i < ordered.len() {
@@ -180,6 +196,7 @@ void cmd_build(list(string) args, bool silent) {
         if file(obj_path).exists() {
             if manifest.has(mod_path) {
                 if manifest.get(mod_path) == source_hash {
+                    obj_paths = obj_paths.add(obj_path);
                     needs_compile = false;
                 }
             }
@@ -198,16 +215,12 @@ void cmd_build(list(string) args, bool silent) {
                 to_mod_names = to_mod_names.add(mod_name);
                 to_mod_paths = to_mod_paths.add(mod_path);
                 to_hashes = to_hashes.add(source_hash);
-                emitted_count = emitted_count + 1;
             }
-        } else {
-            obj_paths = obj_paths.add(obj_path);
         }
 
         i = i + 1;
     }
 
-    # Save manifest after emit pass to track emitted source hashes
     mutable int mi = 0;
     while mi < to_c_paths.len() {
         manifest = manifest.set(to_mod_paths.get(mi), to_hashes.get(mi));
@@ -215,51 +228,16 @@ void cmd_build(list(string) args, bool silent) {
     }
     save_manifest(cache_dir, manifest);
 
-    # -- Compile pass: compile all newly emitted .c files --
     string runtime_dir = home() + "/.slate/deps/runtime/";
-    mutable int ci = 0;
-    while ci < to_c_paths.len() {
-        string c_path = to_c_paths.get(ci);
-        string mod_name = to_mod_names.get(ci);
-        string mod_path = to_mod_paths.get(ci);
-        string obj_path = cache_dir + mod_path.hash() + ".o";
+    list(string) compiled_objs = build_compile(to_c_paths, to_mod_names, to_mod_paths, cache_dir, runtime_dir, silent);
 
-        run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
-        if file(obj_path).exists() == false {
-            print(red("  failed: " + mod_name + " ✗"));
-            print(gray("  clang -c " + c_path + " -o " + obj_path + " -O2 -fno-strict-aliasing -I " + runtime_dir));
-            return;
-        } else {
-            obj_paths = obj_paths.add(obj_path);
-            compiled = compiled + 1;
-            if silent == false { print(gray("  compiling " + mod_name + " ✓")); }
-        }
-        ci = ci + 1;
+    mutable int oi = 0;
+    while oi < compiled_objs.len() {
+        obj_paths = obj_paths.add(compiled_objs.get(oi));
+        oi = oi + 1;
     }
 
-    # -- Link pass --
-    mutable list(string) link_args = empty;
-    link_args = link_args.add("clang");
-    mutable int li = 0;
-    while li < obj_paths.len() {
-        link_args = link_args.add(obj_paths.get(li));
-        li = li + 1;
-    }
-    link_args = link_args.add("-o");
-    link_args = link_args.add(bin_path);
-    run(link_args);
-
-    if file(bin_path).exists() {
+    if build_link(obj_paths, bin_path) {
         if silent == false { print(bold_green("built") + " " + bin_path + " ✓"); }
-    } else {
-        print(red("  failed... link ✗"));
-        mutable string link_cmd = "";
-        mutable int lk = 0;
-        while lk < link_args.len() {
-            if lk > 0 { link_cmd = link_cmd + " "; }
-            link_cmd = link_cmd + link_args.get(lk);
-            lk = lk + 1;
-        }
-        print(gray("  " + link_cmd));
     }
 }
