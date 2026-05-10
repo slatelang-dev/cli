@@ -4,12 +4,26 @@ use slate;
 use compiler;
 
 void cmd_run(list(string) args) {
-    if args.len() < 2 {
+    mutable string path = "";
+    if args.len() >= 2 { path = args.get(1); }
+
+    if file("slate.toml").exists() {
+        Project p = load_project_file();
+        if path == "" {
+            if project_valid(p) == false {
+                print(red("error") + ": invalid slate.toml — missing name or entry");
+                return;
+            }
+            path = p.entry;
+        }
+    }
+
+    if path == "" {
         print("slate run: no file given.");
         print("usage: " + bold_slate("slate run <file.slt>"));
         return;
     }
-    string path = args.get(1);
+
     if file(path).exists() == false {
         print(red("error") + ": file not found: " + bold_slate(path));
         return;
