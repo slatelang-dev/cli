@@ -32,11 +32,64 @@ Scope register_module_symbols(Node program, Scope scope) {
     return s;
 }
 
+Scope register_transitive(
+    Node program,
+    string base_path,
+    Scope scope,
+    mutable table(string, bool) visited
+) {
+    mutable Scope s = scope;
+    mutable list(string) queue = empty;
+
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.Use {
+            string mod_path = resolve_module_path(decl.value, base_path, home());
+            if mod_path != "" {
+                if visited.has(mod_path) == false {
+                    visited = visited.set(mod_path, true);
+                    queue = queue.add(mod_path);
+                }
+            }
+        }
+        i += 1;
+    }
+
+    mutable int qi = 0;
+    while qi < queue.len() {
+        string path = queue.get(qi);
+        string source = file(path).read();
+        if source != "" {
+            ParseResult pr = parse(source);
+            if pr.success {
+                s = register_module_symbols(pr.node, s);
+                string dep_base = resolve_parent(path);
+                mutable int j = 0;
+                while j < pr.node.children.len() {
+                    Node decl = pr.node.children.get(j);
+                    if decl.kind == NodeKind.Use {
+                        string dep_path = resolve_module_path(decl.value, dep_base, home());
+                        if dep_path != "" {
+                            if visited.has(dep_path) == false {
+                                visited = visited.set(dep_path, true);
+                                queue = queue.add(dep_path);
+                            }
+                        }
+                    }
+                    j += 1;
+                }
+            }
+        }
+        qi += 1;
+    }
+
+    return s;
+}
+
 void cmd_check(list(string) args) {
     mutable string path = "";
-    if args.len() >= 2 {
-        path = args.get(1);
-    }
+    if args.len() >= 2 { path = args.get(1); }
 
     mutable bool is_bare = false;
     if file("slate.toml").exists() {
@@ -68,32 +121,11 @@ void cmd_check(list(string) args) {
         return;
     }
 
-    list(ModuleStub) stubs = discover_modules(result.node, base_path, empty);
-    list(LoadedModule) loaded = load_modules(stubs);
-    list(LoadedModule) ordered = reverse_modules(loaded);
-
-    mutable table(string, Node) parsed = empty;
-    mutable int i = 0;
-    while i < ordered.len() {
-        LoadedModule cur = ordered.get(i);
-        if cur.success {
-            ParseResult pr = parse(cur.source);
-            if pr.success {
-                parsed = parsed.set(cur.path, pr.node);
-            }
-        }
-        i += 1;
-    }
+    mutable table(string, bool) visited = empty;
+    visited = visited.set(path, true);
 
     mutable Scope scope = seed_builtins(new_scope());
-    i = 0;
-    while i < ordered.len() {
-        LoadedModule cur = ordered.get(i);
-        if parsed.has(cur.path) {
-            scope = register_module_symbols(parsed.get(cur.path), scope);
-        }
-        i += 1;
-    }
+    scope = register_transitive(result.node, base_path, scope, visited);
     scope = register_module_symbols(result.node, scope);
 
     mutable AnalysisResult ar = analysis_ok();
@@ -103,12 +135,12 @@ void cmd_check(list(string) args) {
         if decl.kind == NodeKind.FnDecl {
             Node return_type = decl.children.get(0);
             if return_type.value == "ptr" and is_bare == false {
-                Span s = make_span(path, decl.line, decl.col, decl.value.len());
+                Span sp = make_span(path, decl.line, decl.col, decl.value.len());
                 AnalysisError err = make_error(
                     ErrorKind.InvalidUse,
                     "ptr type requires bare mode",
                     "Add bare = true to your slate.toml to use ptr",
-                    s
+                    sp
                 );
                 ar = AnalysisResult(errors: ar.errors.add(err), warnings: ar.warnings);
             }
