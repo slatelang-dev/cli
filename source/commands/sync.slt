@@ -48,5 +48,4 @@ void cmd_sync(list(string) args) {
 
     print("");
     print(bold_green("synced") + " " + string(synced) + " dependency(s)");
-    print(bold("note") + ": full dependency resolution coming in 0.3.0");
 }
