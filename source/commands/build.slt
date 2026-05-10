@@ -246,12 +246,9 @@ void cmd_build(list(string) args) {
     }
     link_args = link_args.add("-o");
     link_args = link_args.add(bin_path);
-    print(gray("  linking " + string(link_args.len()) + " files"));
     int status = run(link_args);
-    print(gray("  link status: " + string(status)));
 
     if file(bin_path).exists() {
-        print(gray("  linking... linked ✓"));
         print(bold_green("built") + " " + bin_path + " ✓");
     } else {
         print(red("  failed... link ✗"));
