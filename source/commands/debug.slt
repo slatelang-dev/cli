@@ -1,6 +1,8 @@
 module debug;
 
 use slate;
+use scope_builder;
+use compiler;
 
 void cmd_debug(list(string) args) {
     if args.len() < 2 {
@@ -19,6 +21,10 @@ void cmd_debug(list(string) args) {
         level = int(args.get(2));
     }
 
+    string parent_dir = resolve_parent(path);
+    mutable string base_path = "source";
+    if parent_dir != "" { base_path = parent_dir; }
+
     string source = file(path).read();
     ParseResult result = parse(source);
     if result.success == false {
@@ -26,7 +32,21 @@ void cmd_debug(list(string) args) {
         return;
     }
 
-    AnalysisResult ar = analyse(result.node, path);
+    mutable table(string, int) visited = empty;
+    visited = visited.set(path, 1);
+    mutable Scope scope = seed_builtins(new_scope());
+    scope = register_transitive(result.node, base_path, scope, visited);
+    scope = register_module_symbols(result.node, scope);
+
+    mutable AnalysisResult ar = analysis_ok();
+    mutable int j = 0;
+    while j < result.node.children.len() {
+        Node decl = result.node.children.get(j);
+        if decl.kind == NodeKind.FnDecl {
+            ar = merge_analysis(ar, analyse_fn(decl, path, scope));
+        }
+        j += 1;
+    }
 
     if level == 1 {
         string output = render_errors(ar.errors, source);

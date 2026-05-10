@@ -1,6 +1,8 @@
 module run;
 
 use slate;
+use scope_builder;
+use compiler;
 
 void cmd_run(list(string) args) {
     if args.len() < 2 {
@@ -13,13 +15,34 @@ void cmd_run(list(string) args) {
         print(red("error") + ": file not found: " + bold_slate(path));
         return;
     }
+
+    string parent_dir = resolve_parent(path);
+    mutable string base_path = "source";
+    if parent_dir != "" { base_path = parent_dir; }
+
     string source = file(path).read();
     ParseResult result = parse(source);
     if result.success == false {
         print(red("parse error") + ": " + result.message);
         return;
     }
-    AnalysisResult ar = analyse(result.node, path);
+
+    mutable table(string, int) visited = empty;
+    visited = visited.set(path, 1);
+    mutable Scope scope = seed_builtins(new_scope());
+    scope = register_transitive(result.node, base_path, scope, visited);
+    scope = register_module_symbols(result.node, scope);
+
+    mutable AnalysisResult ar = analysis_ok();
+    mutable int j = 0;
+    while j < result.node.children.len() {
+        Node decl = result.node.children.get(j);
+        if decl.kind == NodeKind.FnDecl {
+            ar = merge_analysis(ar, analyse_fn(decl, path, scope));
+        }
+        j += 1;
+    }
+
     string output = render_all(ar.errors, ar.warnings, source);
     print(output);
 }
