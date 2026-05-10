@@ -2,7 +2,6 @@ module check;
 
 use slate;
 use compiler;
-use scope_builder;
 
 void cmd_check(list(string) args) {
     mutable string path = "";

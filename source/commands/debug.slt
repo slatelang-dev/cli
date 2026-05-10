@@ -1,7 +1,6 @@
 module debug;
 
 use slate;
-use scope_builder;
 use compiler;
 
 void cmd_debug(list(string) args) {
