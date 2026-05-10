@@ -36,10 +36,10 @@ Scope register_transitive(
     Node program,
     string base_path,
     Scope scope,
-    table(string, bool) visited
+    table(string, int) visited
 ) {
     mutable Scope s = scope;
-    mutable table(string, bool) vis = visited;
+    mutable table(string, int) vis = visited;
     mutable list(string) queue = empty;
 
     mutable int i = 0;
@@ -49,7 +49,7 @@ Scope register_transitive(
             string mod_path = resolve_module_path(decl.value, base_path, home());
             if mod_path != "" {
                 if vis.has(mod_path) == false {
-                    vis = vis.set(mod_path, true);
+                    vis = vis.set(mod_path, 1);
                     queue = queue.add(mod_path);
                 }
             }
@@ -73,7 +73,7 @@ Scope register_transitive(
                         string dep_path = resolve_module_path(decl.value, dep_base, home());
                         if dep_path != "" {
                             if vis.has(dep_path) == false {
-                                vis = vis.set(dep_path, true);
+                                vis = vis.set(dep_path, 1);
                                 queue = queue.add(dep_path);
                             }
                         }
@@ -122,8 +122,8 @@ void cmd_check(list(string) args) {
         return;
     }
 
-    mutable table(string, bool) visited = empty;
-    visited = visited.set(path, true);
+    mutable table(string, int) visited = empty;
+    visited = visited.set(path, 1);
 
     mutable Scope scope = seed_builtins(new_scope());
     scope = register_transitive(result.node, base_path, scope, visited);
