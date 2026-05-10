@@ -1,0 +1,5 @@
+module other_cmds;
+
+use docs;
+use clean;
+use help;

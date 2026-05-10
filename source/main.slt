@@ -1,5 +1,8 @@
 use slate;
-use commands;
+use project_cmds;
+use dev_cmds;
+use deps_cmds;
+use other_cmds;
 
 void main() {
     list(string) args = args();
