@@ -25,6 +25,7 @@ void cmd_sync(list(string) args) {
 
     list(string) lines = toml.split("\n");
     mutable bool in_deps = false;
+    mutable bool found_any = false;
     mutable int synced = 0;
     mutable int i = 0;
     while i < lines.len() {
@@ -34,25 +35,26 @@ void cmd_sync(list(string) args) {
         } else if line.starts_with("[") {
             in_deps = false;
         } else if in_deps and line.contains("= {") {
+            found_any = true;
             list(string) eq_parts = line.split(" = ");
             if eq_parts.len() >= 2 {
                 string dep_name = eq_parts.get(0);
-                string dep_value = eq_parts.get(1);
+                list(string) quote_parts = line.split("\"");
 
-                if dep_value.contains("git") {
-                    list(string) quote_parts = dep_value.split("\"");
-                    if quote_parts.len() >= 2 {
-                        string url = quote_parts.get(1);
-                        list(string) url_parts = url.split("/");
-                        string raw_name = url_parts.get(url_parts.len() - 1);
-                        string clean_name = clean_dep_name(raw_name);
+                if quote_parts.len() >= 2 {
+                    string url_or_path = quote_parts.get(1);
+                    list(string) url_parts = url_or_path.split("/");
+                    string raw_name = url_parts.get(url_parts.len() - 1);
+                    string clean_name = clean_dep_name(raw_name);
+
+                    if line.contains("git = ") {
                         string dep_dir = home() + "/.slate/deps/" + clean_name;
 
                         print(bold_slate(clean_name) + " syncing...");
 
                         if file(dep_dir).exists() == false {
-                            print(gray("  cloning " + url + "..."));
-                            run("git", "clone", url, dep_dir);
+                            print(gray("  cloning " + url_or_path + "..."));
+                            run("git", "clone", url_or_path, dep_dir);
                         } else {
                             print(gray("  pulling..."));
                             run("git", "-C", dep_dir, "pull");
@@ -64,12 +66,8 @@ void cmd_sync(list(string) args) {
                         } else {
                             print(red("  " + clean_name + " failed ✗"));
                         }
-                    }
-                } else if dep_value.contains("path") {
-                    list(string) quote_parts = dep_value.split("\"");
-                    if quote_parts.len() >= 2 {
-                        string path_val = quote_parts.get(1);
-                        print(gray("  " + dep_name + " -> " + path_val + " (local, no sync needed)"));
+                    } else if line.contains("path = ") {
+                        print(gray("  " + dep_name + " -> " + url_or_path + " (local, no sync needed)"));
                         synced = synced + 1;
                     }
                 }
@@ -78,8 +76,13 @@ void cmd_sync(list(string) args) {
         i += 1;
     }
 
-    if synced == 0 {
+    if found_any == false {
         print("no dependencies found");
+        return;
+    }
+
+    if synced == 0 {
+        print("all dependencies up to date");
         return;
     }
 
