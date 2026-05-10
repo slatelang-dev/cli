@@ -26,6 +26,15 @@ void cmd_check(list(string) args) {
         return;
     }
 
+    string file_project_root = find_source_root(resolve_parent(path));
+    if file_project_root != "" {
+        string file_toml = resolve_parent(file_project_root) + "/slate.toml";
+        if file(file_toml).exists() {
+            Project fp = load_project(file(file_toml).read());
+            is_bare = fp.bare;
+        }
+    }
+
     string parent_dir = resolve_parent(path);
     mutable string base_path = "source";
     if parent_dir != "" { base_path = parent_dir; }
