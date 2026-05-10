@@ -4,6 +4,7 @@ use run;
 use check;
 use build;
 use build_manifest;
+use build_pipeline;
 use test;
 use debug;
 use tidy;
