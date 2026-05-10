@@ -226,7 +226,8 @@ void cmd_build(list(string) args) {
 
         run("clang", "-c", c_path, "-o", obj_path, "-O2", "-fno-strict-aliasing", "-I", runtime_dir);
         if file(obj_path).exists() == false {
-            print(red("  failed... " + mod_name + " ✗"));
+            print(red("  failed: " + mod_name + " ✗"));
+            print(gray("  clang -c " + c_path + " -o " + obj_path + " -O2 -fno-strict-aliasing -I " + runtime_dir));
             return;
         } else {
             obj_paths = obj_paths.add(obj_path);
@@ -246,7 +247,7 @@ void cmd_build(list(string) args) {
     }
     link_args = link_args.add("-o");
     link_args = link_args.add(bin_path);
-    int status = run(link_args);
+    string link_out = run(link_args);
 
     if file(bin_path).exists() {
         print(bold_green("built") + " " + bin_path + " ✓");
