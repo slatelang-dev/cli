@@ -186,13 +186,13 @@ void cmd_build(list(string) args) {
         }
 
         if needs_compile {
-            print(gray("  emitting " + mod_name + " ✓"));
             mutable string c_code = "";
             if parsed_asts.has(m.path) {
                 Node parsed = parsed_asts.get(m.path);
                 c_code = walk_module(parsed, reg);
             }
             if c_code.len() > 0 {
+                print(gray("  emitting " + mod_name + " ✓"));
                 file(c_path).write(c_code);
                 to_c_paths = to_c_paths.add(c_path);
                 to_mod_names = to_mod_names.add(mod_name);
