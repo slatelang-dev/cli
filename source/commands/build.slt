@@ -254,11 +254,11 @@ void cmd_build(list(string) args) {
     } else {
         print(red("  failed... link ✗"));
         mutable string link_cmd = "";
-        mutable int li2 = 0;
-        while li2 < link_args.len() {
-            if li2 > 0 { link_cmd = link_cmd + " "; }
-            link_cmd = link_cmd + link_args.get(li2);
-            li2 = li2 + 1;
+        mutable int lk = 0;
+        while lk < link_args.len() {
+            if lk > 0 { link_cmd = link_cmd + " "; }
+            link_cmd = link_cmd + link_args.get(lk);
+            lk = lk + 1;
         }
         print(gray("  " + link_cmd));
     }
