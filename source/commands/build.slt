@@ -36,7 +36,7 @@ void save_manifest(string save_cache_dir, table(string, string) manifest) {
     file(save_cache_dir + "manifest.toml").write(out);
 }
 
-void cmd_build(list(string) args) {
+void cmd_build(list(string) args, bool silent) {
     Project p = load_project(file("slate.toml").read());
 
     if project_valid(p) == false {
@@ -45,7 +45,7 @@ void cmd_build(list(string) args) {
         return;
     }
 
-    print(bold("Building ") + bold_slate(p.name) + "...");
+    if silent == false { print(bold("Building ") + bold_slate(p.name) + "..."); }
 
     LoadedModule entry = load_entry(p);
 
@@ -76,7 +76,7 @@ void cmd_build(list(string) args) {
     if entry_already_found == false {
         stubs = stubs.add(ModuleStub(name: p.name, path: p.entry));
     }
-    print(gray("  modules discovered ✓"));
+    if silent == false { print(gray("  modules discovered ✓")); }
 
     mutable list(LoadedModule) modules = load_modules(stubs);
 
@@ -192,7 +192,7 @@ void cmd_build(list(string) args) {
                 c_code = emit_source(parsed, reg);
             }
             if c_code.len() > 0 {
-                print(gray("  emitting " + mod_name + " ✓"));
+                if silent == false { print(gray("  emitting " + mod_name + " ✓")); }
                 file(c_path).write(c_code);
                 to_c_paths = to_c_paths.add(c_path);
                 to_mod_names = to_mod_names.add(mod_name);
@@ -232,7 +232,7 @@ void cmd_build(list(string) args) {
         } else {
             obj_paths = obj_paths.add(obj_path);
             compiled = compiled + 1;
-            print(gray("  compiling " + mod_name + " ✓"));
+            if silent == false { print(gray("  compiling " + mod_name + " ✓")); }
         }
         ci = ci + 1;
     }
@@ -250,7 +250,7 @@ void cmd_build(list(string) args) {
     run(link_args);
 
     if file(bin_path).exists() {
-        print(bold_green("built") + " " + bin_path + " ✓");
+        if silent == false { print(bold_green("built") + " " + bin_path + " ✓"); }
     } else {
         print(red("  failed... link ✗"));
         mutable string link_cmd = "";
