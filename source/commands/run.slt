@@ -3,6 +3,7 @@ module run;
 use slate;
 use compiler;
 use analyse;
+use build;
 
 void cmd_run(list(string) args) {
     mutable string path = "";
@@ -50,7 +51,7 @@ void cmd_run(list(string) args) {
     }
 
     print(bold("Running ") + bold_slate(p.name) + "...");
-    run("builds/slate", "build");
+    cmd_build(empty);
 
     string bin_path = "builds/" + p.bin;
     if file(bin_path).exists() == false {
@@ -65,5 +66,5 @@ void cmd_run(list(string) args) {
         run_args = run_args.add(args.get(ai));
         ai += 1;
     }
-    run(run_args);
+    exec(run_args);
 }
