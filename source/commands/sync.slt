@@ -2,6 +2,10 @@ module sync;
 
 use slate;
 
+string clean_dep_name(string name) {
+    return name.replace(".git", "");
+}
+
 void cmd_sync(list(string) args) {
     if file("slate.toml").exists() == false {
         print(red("error") + ": no slate.toml found in current directory");
@@ -29,20 +33,53 @@ void cmd_sync(list(string) args) {
             in_deps = true;
         } else if line.starts_with("[") {
             in_deps = false;
-        } else if in_deps and line.contains("git") {
-            list(string) parts = line.split("\"");
-            string url = parts.get(1);
-            list(string) url_parts = url.split("/");
-            string name = url_parts.get(url_parts.len() - 1);
-            string clean_name = name.replace(".git", "");
-            print(bold_slate(clean_name) + " syncing...");
-            synced = synced + 1;
+        } else if in_deps and line.contains("= {") {
+            list(string) eq_parts = line.split(" = ");
+            if eq_parts.len() >= 2 {
+                string dep_name = eq_parts.get(0);
+                string dep_value = eq_parts.get(1);
+
+                if dep_value.contains("git") {
+                    list(string) quote_parts = dep_value.split("\"");
+                    if quote_parts.len() >= 2 {
+                        string url = quote_parts.get(1);
+                        list(string) url_parts = url.split("/");
+                        string raw_name = url_parts.get(url_parts.len() - 1);
+                        string clean_name = clean_dep_name(raw_name);
+                        string dep_dir = home() + "/.slate/deps/" + clean_name;
+
+                        print(bold_slate(clean_name) + " syncing...");
+
+                        if file(dep_dir).exists() == false {
+                            print(gray("  cloning " + url + "..."));
+                            run("git", "clone", url, dep_dir);
+                        } else {
+                            print(gray("  pulling..."));
+                            run("git", "-C", dep_dir, "pull");
+                        }
+
+                        if file(dep_dir).exists() {
+                            print(bold_green("  " + clean_name + " synced ✓"));
+                            synced = synced + 1;
+                        } else {
+                            print(red("  " + clean_name + " failed ✗"));
+                        }
+                    }
+                } else if dep_value.contains("path") {
+                    list(string) quote_parts = dep_value.split("\"");
+                    if quote_parts.len() >= 2 {
+                        string path_val = quote_parts.get(1);
+                        print(gray("  " + dep_name + " -> " + path_val + " (local, no sync needed)"));
+                        synced = synced + 1;
+                    }
+                }
+            }
         }
         i += 1;
     }
 
     if synced == 0 {
-        print("no git dependencies found");
+        print("no dependencies found");
         return;
     }
 
