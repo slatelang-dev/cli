@@ -24,7 +24,7 @@ table(string, string) load_manifest(string cache_dir) {
     return m;
 }
 
-void save_manifest(string cache_dir, table(string, string) manifest) {
+void save_manifest(string save_cache_dir, table(string, string) manifest) {
     mutable string out = "";
     list(string) keys = manifest.keys();
     mutable int i = 0;
@@ -33,7 +33,7 @@ void save_manifest(string cache_dir, table(string, string) manifest) {
         out = out + keys.get(i) + " = " + manifest.get(keys.get(i));
         i = i + 1;
     }
-    file(cache_dir + "manifest.toml").write(out);
+    file(save_cache_dir + "manifest.toml").write(out);
 }
 
 void cmd_build(list(string) args) {
