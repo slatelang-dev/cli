@@ -37,7 +37,7 @@ void save_manifest(string save_cache_dir, table(string, string) manifest) {
 }
 
 void cmd_build(list(string) args) {
-    Project p = load_project_file();
+    Project p = load_project(file("slate.toml").read());
 
     if project_valid(p) == false {
         print(red("error") + ": invalid or missing slate.toml");
@@ -189,7 +189,7 @@ void cmd_build(list(string) args) {
             mutable string c_code = "";
             if parsed_asts.has(m.path) {
                 Node parsed = parsed_asts.get(m.path);
-                c_code = walk_module(parsed, reg);
+                c_code = emit_source(parsed, reg);
             }
             if c_code.len() > 0 {
                 print(gray("  emitting " + mod_name + " ✓"));

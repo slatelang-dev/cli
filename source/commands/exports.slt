@@ -6,6 +6,7 @@ use build;
 use test;
 use debug;
 use tidy;
+use analyse;
 use new;
 use init;
 use create;

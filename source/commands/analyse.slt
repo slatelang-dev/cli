@@ -1,0 +1,49 @@
+module analyse;
+
+use slate;
+use compiler;
+
+AnalysisResult analyse_source(string path, bool is_bare) {
+    string parent_dir = resolve_parent(path);
+    mutable string base_path = "source";
+    if parent_dir != "" { base_path = parent_dir; }
+
+    string source = file(path).read();
+    ParseResult result = parse(source);
+    if result.success == false {
+        print(red("parse error") + ": " + result.message);
+        return analysis_ok();
+    }
+
+    mutable table(string, int) visited = empty;
+    visited = visited.set(path, 1);
+    mutable Scope scope = seed_builtins(new_scope());
+    scope = register_transitive(result.node, base_path, scope, visited);
+    scope = push_scope(scope);
+    scope = register_module_symbols(result.node, scope);
+
+    mutable AnalysisResult ar = analysis_ok();
+    mutable int j = 0;
+    while j < result.node.children.len() {
+        Node decl = result.node.children.get(j);
+        if decl.kind == NodeKind.FnDecl {
+            if is_bare == false {
+                Node return_type = decl.children.get(0);
+                if return_type.value == "ptr" {
+                    Span sp = make_span(path, decl.line, decl.col, decl.value.len());
+                    AnalysisError err = make_error(
+                        ErrorKind.InvalidUse,
+                        "ptr type requires bare mode",
+                        "Add bare = true to your slate.toml to use ptr",
+                        sp
+                    );
+                    ar = AnalysisResult(errors: ar.errors.add(err), warnings: ar.warnings);
+                }
+            }
+            ar = merge_analysis(ar, analyse_fn(decl, path, scope));
+        }
+        j += 1;
+    }
+
+    return ar;
+}

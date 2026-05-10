@@ -4,7 +4,7 @@ use slate;
 use compiler;
 
 void cmd_info(list(string) args) {
-    Project p = load_project_file();
+    Project p = load_project(file("slate.toml").read());
     if project_valid(p) == false {
         print(red("error") + ": invalid or missing slate.toml");
         print("make sure your slate.toml has a name and entry field");
