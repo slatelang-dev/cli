@@ -9,8 +9,12 @@ void cmd_run(list(string) args) {
     if args.len() >= 2 { path = args.get(1); }
 
     mutable bool is_bare = false;
+    mutable bool has_project = false;
+    Project p = make_project("", "", "", "", "", false);
     if file("slate.toml").exists() {
-        Project p = load_project(file("slate.toml").read());
+        p = load_project(file("slate.toml").read());
+        is_bare = p.bare;
+        has_project = true;
         if path == "" {
             if project_valid(p) == false {
                 print(red("error") + ": invalid slate.toml — missing name or entry");
@@ -33,7 +37,33 @@ void cmd_run(list(string) args) {
 
     mutable AnalysisResult ar = analyse_source(path, is_bare);
 
-    string source = file(path).read();
-    string output = render_all(ar.errors, ar.warnings, source);
-    print(output);
+    if ar.errors.len() > 0 {
+        string source = file(path).read();
+        string output = render_all(ar.errors, ar.warnings, source);
+        print(output);
+        return;
+    }
+
+    if has_project == false {
+        print(green("✓") + " no errors");
+        return;
+    }
+
+    print(bold("Running ") + bold_slate(p.name) + "...");
+    run("builds/slate", "build");
+
+    string bin_path = "builds/" + p.bin;
+    if file(bin_path).exists() == false {
+        print(red("error") + ": build failed");
+        return;
+    }
+
+    mutable list(string) run_args = empty;
+    run_args = run_args.add(bin_path);
+    mutable int ai = 2;
+    while ai < args.len() {
+        run_args = run_args.add(args.get(ai));
+        ai += 1;
+    }
+    run(run_args);
 }
