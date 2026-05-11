@@ -33,7 +33,7 @@ void cmd_check(list(string) args) {
 
     if path.starts_with("../") or path.starts_with("./") {
         string cwd = run("pwd").trim();
-        path = cwd + "/" + path;
+        path = normalize_path(cwd + "/" + path);
     }
 
     if path == "" {
