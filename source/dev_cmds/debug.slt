@@ -21,7 +21,7 @@ void cmd_debug(list(string) args) {
         level = int(args.get(2));
     }
 
-    mutable AnalysisResult ar = analyse_source(path, false);
+    mutable AnalysisResult ar = analyse_source(path, false, false);
 
     string source = file(path).read();
     if level == 1 {

@@ -37,7 +37,7 @@ void cmd_run(list(string) args) {
         return;
     }
 
-    mutable AnalysisResult ar = analyse_source(path, is_bare);
+    mutable AnalysisResult ar = analyse_source(path, is_bare, false);
 
     if ar.errors.len() > 0 {
         string source = file(path).read();

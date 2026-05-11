@@ -16,7 +16,7 @@ void cmd_tidy(list(string) args) {
         return;
     }
 
-    mutable AnalysisResult ar = analyse_source(path, false);
+    mutable AnalysisResult ar = analyse_source(path, false, false);
 
     string source = file(path).read();
     if ar.warnings.len() == 0 {

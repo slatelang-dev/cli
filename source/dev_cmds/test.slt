@@ -16,7 +16,7 @@ void cmd_test(list(string) args) {
         return;
     }
 
-    mutable AnalysisResult ar = analyse_source(path, false);
+    mutable AnalysisResult ar = analyse_source(path, false, false);
 
     string source = file(path).read();
     if ar.errors.len() > 0 {
