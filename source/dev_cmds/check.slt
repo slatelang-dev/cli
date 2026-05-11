@@ -31,6 +31,11 @@ void cmd_check(list(string) args) {
         }
     }
 
+    if path.starts_with("../") or path.starts_with("./") {
+        string cwd = run("pwd").trim();
+        path = cwd + "/" + path;
+    }
+
     if path == "" {
         print("slate check: no file given.");
         print("usage: slate check [--debug-resolution] <file>");
