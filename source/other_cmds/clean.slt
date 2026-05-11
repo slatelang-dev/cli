@@ -7,7 +7,7 @@ void cmd_clean(list(string) args) {
         string count_out = run("sh", "-c", "find builds/ -type f | wc -l").trim();
         string size_out  = run("sh", "-c", "du -sh builds/").trim();
         list(string) parts = size_out.split("\t");
-        string size_val = parts.get(0).trim();
+        mutable string size_val = parts.get(0).trim();
         if size_val.ends_with("K") { size_val = size_val.replace("K", "KB"); }
         if size_val.ends_with("M") { size_val = size_val.replace("M", "MB"); }
         if size_val.ends_with("G") { size_val = size_val.replace("G", "GB"); }
