@@ -42,8 +42,6 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
             }
             ar = merge_analysis(ar, analyse_fn(decl, path, scope));
         }
-        if decl.kind == NodeKind.ForwardDecl {
-        }
         j += 1;
     }
 
