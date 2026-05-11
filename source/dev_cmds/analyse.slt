@@ -3,7 +3,7 @@ module analyse;
 use slate;
 use compiler;
 
-AnalysisResult analyse_source(string path, bool is_bare) {
+AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) {
     string parent_dir = resolve_parent(path);
     mutable string base_path = "source";
     if parent_dir != "" { base_path = parent_dir; }
@@ -18,7 +18,7 @@ AnalysisResult analyse_source(string path, bool is_bare) {
     mutable table(string, int) visited = empty;
     visited = visited.set(path, 1);
     mutable Scope scope = seed_builtins(new_scope());
-    scope = register_transitive(result.node, base_path, scope, visited);
+    scope = register_transitive(result.node, base_path, scope, visited, debug_resolution);
     scope = push_scope(scope);
     scope = register_module_symbols(result.node, scope);
 

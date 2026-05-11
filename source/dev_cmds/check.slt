@@ -6,7 +6,17 @@ use analyse;
 
 void cmd_check(list(string) args) {
     mutable string path = "";
-    if args.len() >= 2 { path = args.get(1); }
+    mutable bool debug_resolution = false;
+    mutable int ai = 1;
+    while ai < args.len() {
+        string arg = args.get(ai);
+        if arg == "--debug-resolution" {
+            debug_resolution = true;
+        } else if path == "" {
+            path = arg;
+        }
+        ai += 1;
+    }
 
     mutable bool is_bare = false;
     if file("slate.toml").exists() {
@@ -23,7 +33,7 @@ void cmd_check(list(string) args) {
 
     if path == "" {
         print("slate check: no file given.");
-        print("usage: slate check <file>");
+        print("usage: slate check [--debug-resolution] <file>");
         return;
     }
 
@@ -36,7 +46,7 @@ void cmd_check(list(string) args) {
         }
     }
 
-    mutable AnalysisResult ar = analyse_source(path, is_bare);
+    mutable AnalysisResult ar = analyse_source(path, is_bare, debug_resolution);
 
     string source = file(path).read();
     string output = render_all(ar.errors, ar.warnings, source);
