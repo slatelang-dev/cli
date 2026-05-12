@@ -45,5 +45,21 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
         j += 1;
     }
 
+    # Pass 3: Re-run resolution to catch ordering issues
+    ar = merge_analysis(ar, verify_pass(result.node, path, scope, ar.errors));
+
+    return ar;
+}
+
+AnalysisResult verify_pass(Node program, string file, Scope fn_scope, list(AnalysisError) known_errors) {
+    mutable AnalysisResult ar = analysis_ok();
+    mutable int i = 0;
+    while i < program.children.len() {
+        Node decl = program.children.get(i);
+        if decl.kind == NodeKind.FnDecl {
+            ar = merge_analysis(ar, verify_fn(decl, file, fn_scope, known_errors));
+        }
+        i += 1;
+    }
     return ar;
 }
