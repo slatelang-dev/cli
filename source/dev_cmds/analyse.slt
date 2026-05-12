@@ -32,6 +32,7 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
     while j < result.node.children.len() {
         Node decl = result.node.children.get(j);
         if decl.kind == NodeKind.FnDecl {
+            print("[debug] loop j=" + string(j) + " fn='" + decl.value + "' pre: sym_count=" + string(scope.symbols.len()) + " depth=" + string(scope.depth));
             if is_bare == false {
                 Node return_type = decl.children.get(0);
                 if return_type.value == "ptr" {
@@ -46,6 +47,7 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
                 }
             }
             ar = merge_analysis(ar, analyse_fn(decl, path, scope));
+            print("[debug] loop j=" + string(j) + " fn='" + decl.value + "' post: sym_count=" + string(scope.symbols.len()) + " depth=" + string(scope.depth));
         }
         j += 1;
     }
