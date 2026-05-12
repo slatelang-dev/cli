@@ -4,12 +4,16 @@ use slate;
 use compiler;
 
 AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) {
-    string abs_path = normalize_path(run("pwd").trim() + "/" + path);
-    string parent_dir = resolve_parent(abs_path);
+    string parent_dir = resolve_parent(path);
     mutable string base_path = "source";
     if parent_dir != "" { base_path = parent_dir; }
 
-    string source = file(abs_path).read();
+    mutable string visited_key = path;
+    if path.starts_with("/") == false {
+        visited_key = normalize_path(run("pwd").trim() + "/" + path);
+    }
+
+    string source = file(path).read();
     ParseResult result = parse(source);
     if result.success == false {
         print(red("parse error") + ": " + result.message);
@@ -17,7 +21,7 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
     }
 
     mutable table(string, int) visited = empty;
-    visited = visited.set(abs_path, 1);
+    visited = visited.set(visited_key, 1);
     mutable Scope scope = seed_builtins(new_scope());
     scope = register_transitive(result.node, base_path, scope, visited, debug_resolution);
     scope = push_scope(scope);
