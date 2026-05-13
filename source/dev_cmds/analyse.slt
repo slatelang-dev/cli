@@ -13,12 +13,6 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
         visited_key = normalize_path(run("pwd").trim() + "/" + path);
     }
 
-    if file(path).exists() == false {
-        Span sp = make_span_point(path, 0, 0);
-        AnalysisError e = make_error(ErrorKind.InvalidUse, "file not found: " + path, "", sp);
-        return AnalysisResult(errors: empty.add(e), warnings: empty);
-    }
-
     string source = file(path).read();
     ParseResult result = parse(source);
     if result.success == false {
