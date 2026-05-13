@@ -9,7 +9,7 @@ void cmd_build(list(string) args, bool silent) {
     Project p = load_project(file("slate.toml").read());
 
     if project_valid(p) == false {
-        print(red("error") + ": invalid or missing slate.toml");
+        err("invalid or missing slate.toml");
         print("make sure your slate.toml has a name and entry field");
         return;
     }
@@ -36,7 +36,7 @@ void cmd_build(list(string) args, bool silent) {
     LoadedModule entry = load_entry(p);
 
     if entry.success == false {
-        print(red("error") + ": " + entry.error);
+        err(entry.error);
         return;
     }
 
@@ -77,7 +77,7 @@ void cmd_build(list(string) args, bool silent) {
                 reg = register_program(reg, p_res.node);
                 parsed_asts = parsed_asts.set(m.path, p_res.node);
             } else {
-                print(red("error") + ": " + m.name + ": " + p_res.message);
+                err(m.name + ": " + p_res.message);
             }
         }
         pi = pi + 1;
@@ -158,6 +158,6 @@ void cmd_build(list(string) args, bool silent) {
         lfi = lfi + 1;
     }
     if build_link(obj_paths, bin_path, link_flags) {
-        if silent == false { print(bold_green("built") + " " + bin_path + " ✓"); }
+        if silent == false { done("built " + bin_path); }
     }
 }

@@ -8,7 +8,7 @@ string clean_dep_name(string name) {
 
 void cmd_sync(list(string) args) {
     if file("slate.toml").exists() == false {
-        print(red("error") + ": no slate.toml found in current directory");
+        err("no slate.toml found in current directory");
         print("run " + bold_slate("slate new <name>") + " to create a project");
         return;
     }
@@ -61,10 +61,10 @@ void cmd_sync(list(string) args) {
                         }
 
                         if file(dep_dir).exists() {
-                            print(bold_green("  " + clean_name + " synced ✓"));
+                            info(clean_name + " synced");
                             synced = synced + 1;
                         } else {
-                            print(red("  " + clean_name + " failed ✗"));
+                            err(clean_name + " failed");
                         }
                     } else if line.contains("path = ") {
                         print(gray("  " + dep_name + " -> " + url_or_path + " (local, no sync needed)"));
@@ -87,5 +87,5 @@ void cmd_sync(list(string) args) {
     }
 
     print("");
-    print(bold_green("synced") + " " + string(synced) + " dependency(s)");
+    done(string(synced) + " dependency(s)");
 }

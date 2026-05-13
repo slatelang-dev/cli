@@ -10,7 +10,7 @@ void cmd_add(list(string) args) {
     string url = args.get(1);
 
     if file("slate.toml").exists() == false {
-        print(red("error") + ": no slate.toml found in current directory");
+        err("no slate.toml found in current directory");
         print("run " + bold_slate("slate new <name>") + " to create a project");
         return;
     }
@@ -18,7 +18,7 @@ void cmd_add(list(string) args) {
     string toml = file("slate.toml").read();
 
     if toml.contains(url) {
-        print(bold_yellow("warning") + ": " + url + " is already in slate.toml");
+        warn(url + " is already in slate.toml");
         return;
     }
 
@@ -37,6 +37,6 @@ void cmd_add(list(string) args) {
     }
 
     file("slate.toml").write(new_toml);
-    print(bold_green("added") + " " + bold_slate(name) + " to slate.toml");
+    done("added " + bold_slate(name) + " to slate.toml");
     print("url: " + url);
 }

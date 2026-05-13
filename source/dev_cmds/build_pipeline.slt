@@ -114,7 +114,7 @@ list(string) build_compile(list(string) to_c_paths, list(string) to_mod_names, l
         compile_args = compile_args.add(runtime_dir);
         run(compile_args);
         if file(obj_path).exists() == false {
-            print(red("  failed: " + mod_name + " ✗"));
+            err("failed: " + mod_name);
             return obj_paths;
         } else {
             obj_paths = obj_paths.add(obj_path);
@@ -152,7 +152,7 @@ bool build_link(list(string) obj_paths, string bin_path, list(string) extra_flag
             link_cmd = link_cmd + link_args.get(lk);
             lk = lk + 1;
         }
-        print(red("  failed... link ✗"));
+        err("link failed");
         print(gray("  " + link_cmd));
         return false;
     }

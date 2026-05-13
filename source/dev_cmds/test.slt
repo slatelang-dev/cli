@@ -12,7 +12,7 @@ void cmd_test(list(string) args) {
     }
     string path = args.get(1);
     if file(path).exists() == false {
-        print(red("error") + ": file not found: " + bold_slate(path));
+        err("file not found: " + bold_slate(path));
         return;
     }
 
@@ -37,7 +37,7 @@ void cmd_test(list(string) args) {
     }
 
     if found == 0 {
-        print(bold_yellow("warning") + ": no test annotations found in " + bold_slate(path));
+        warn("no test annotations found in " + bold_slate(path));
         print("add " + bold("#T expected output: ...") + " comments to your file");
         return;
     }

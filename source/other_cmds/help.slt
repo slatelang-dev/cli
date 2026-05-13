@@ -96,7 +96,7 @@ void cmd_help(list(string) args) {
             return;
         }
 
-        print(red("unknown command") + ": " + topic);
+        err("unknown command: " + topic);
         print("run " + bold_slate("slate help") + " to see all commands");
         return;
     }

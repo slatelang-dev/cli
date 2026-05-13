@@ -12,7 +12,7 @@ void cmd_tidy(list(string) args) {
     }
     string path = args.get(1);
     if file(path).exists() == false {
-        print(red("error") + ": file not found: " + bold_slate(path));
+        err("file not found: " + bold_slate(path));
         return;
     }
 
@@ -20,7 +20,7 @@ void cmd_tidy(list(string) args) {
 
     string source = file(path).read();
     if ar.warnings.len() == 0 {
-        print(bold_green("✓") + " " + bold_slate(path) + " looks good");
+        done(bold_slate(path) + " looks good");
         return;
     }
 

@@ -4,7 +4,7 @@ use slate;
 
 void cmd_init(list(string) args) {
     if file("slate.toml").exists() {
-        print(bold_yellow("warning") + ": slate.toml already exists in current directory");
+        warn("slate.toml already exists in current directory");
         print("run " + bold_slate("slate info") + " to see project info");
         return;
     }
@@ -23,6 +23,6 @@ void cmd_init(list(string) args) {
     file(".gitignore").write("builds/\n.DS_Store\n");
     run("git", "init");
 
-    print(bold_green("initialized") + " " + bold_slate(name));
+    done("initialized " + bold_slate(name));
     print("next: slate run source/main.slt");
 }

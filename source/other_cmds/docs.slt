@@ -82,6 +82,6 @@ void cmd_docs(list(string) args) {
         return;
     }
 
-    print(red("unknown topic") + ": " + topic);
+    err("unknown topic: " + topic);
     print("run " + bold_slate("slate docs") + " to see available topics");
 }

@@ -13,7 +13,7 @@ void cmd_clean(list(string) args) {
         if size_val.ends_with("G") { size_val = size_val.replace("G", "GB"); }
         if size_val.ends_with("T") { size_val = size_val.replace("T", "TB"); }
         run("rm", "-rf", "builds/");
-        print(bold_green("cleaned") + " builds/ - " + count_out + " files, " + size_val + " freed");
+        done("cleaned - " + count_out + " files, " + size_val + " freed");
     } else {
         print("nothing to clean.");
     }

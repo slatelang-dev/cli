@@ -12,7 +12,7 @@ void cmd_debug(list(string) args) {
     }
     string path = args.get(1);
     if file(path).exists() == false {
-        print(red("error") + ": file not found: " + bold_slate(path));
+        err("file not found: " + bold_slate(path));
         return;
     }
 
@@ -29,7 +29,7 @@ void cmd_debug(list(string) args) {
         if output.len() > 0 {
             print(output);
         } else {
-            print(bold_green("✓") + " no errors");
+            done("no errors");
         }
         return;
     }

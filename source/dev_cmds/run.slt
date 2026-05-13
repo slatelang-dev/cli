@@ -17,7 +17,7 @@ void cmd_run(list(string) args) {
         is_bare = p.bare;
         has_project = true;
         if project_valid(p) == false {
-            print(red("error") + ": invalid slate.toml — missing name or entry");
+            err("invalid slate.toml — missing name or entry");
             return;
         }
         path = p.entry;
@@ -33,7 +33,7 @@ void cmd_run(list(string) args) {
     }
 
     if file(path).exists() == false {
-        print(red("error") + ": file not found: " + bold_slate(path));
+        err("file not found: " + bold_slate(path));
         return;
     }
 
@@ -57,7 +57,7 @@ void cmd_run(list(string) args) {
     cmd_build(empty, true);
 
     if file(bin_path).exists() == false {
-        print(red("error") + ": build failed");
+        err("build failed");
         return;
     }
 

@@ -12,7 +12,7 @@ void cmd_remove(list(string) args) {
     string name = args.get(1);
 
     if file("slate.toml").exists() == false {
-        print(red("error") + ": no slate.toml found in current directory");
+        err("no slate.toml found in current directory");
         print("run " + bold_slate("slate new <name>") + " to create a project");
         return;
     }
@@ -20,7 +20,7 @@ void cmd_remove(list(string) args) {
     string toml = file("slate.toml").read();
 
     if toml.contains(name) == false {
-        print(bold_yellow("warning") + ": " + bold_slate(name) + " not found in slate.toml");
+        warn(bold_slate(name) + " not found in slate.toml");
         return;
     }
 
@@ -36,5 +36,5 @@ void cmd_remove(list(string) args) {
     }
 
     file("slate.toml").write(new_toml);
-    print(bold_green("removed") + " " + bold_slate(name) + " from slate.toml");
+    done("removed " + bold_slate(name) + " from slate.toml");
 }
