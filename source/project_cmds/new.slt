@@ -9,7 +9,7 @@ void cmd_new(list(string) args) {
     string name = args.get(1);
     run("mkdir", "-p", name + "/source");
     file(name + "/source/main.slt").write("void main() {\n    print(\"hello from " + name + "!\");\n}\n");
-    file(name + "/slate.toml").write("[project]\nname = \"" + name + "\"\nversion = \"0.1.0\"\ndescription = \"\"\nentry = \"source/main.slt\"\n");
+    file(name + "/slate.toml").write("[project]\nname = \"" + name + "\"\nversion = \"0.1.0\"\ndescription = \"\"\nentry = \"source/main.slt\"\n\n[build]\nbin = \"" + name + "\"\n");
     file(name + "/.gitignore").write("builds/\n.DS_Store\n");
     file(name + "/README.md").write("# " + name + "\n");
     run("git", "init", "-q", name);

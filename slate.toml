@@ -1,9 +1,13 @@
 [project]
 name = "cli"
 version = "0.2.0"
-description = ""
+description = "The Slate command line interface — slate run, build, check, and more "
 entry = "source/main.slt"
+
+[build]
 bin = "slate"
+target = "x86-64-v3"
+opt = "release-fast"
 
 [deps]
 slate = { git = "https://github.com/slatelang-dev/slate" }

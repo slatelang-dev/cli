@@ -14,6 +14,23 @@ void cmd_build(list(string) args, bool silent) {
         return;
     }
 
+    mutable string opt = p.opt;
+    mutable string target = p.target;
+    mutable int ai = 1;
+    while ai < args.len() {
+        string a = args.get(ai);
+        if a == "--debug" { opt = "debug"; }
+        else if a == "--release" { opt = "release"; }
+        else if a == "--release-fast" { opt = "release-fast"; }
+        else if a == "--target" {
+            ai = ai + 1;
+            if ai < args.len() { target = args.get(ai); }
+        }
+        ai = ai + 1;
+    }
+    if opt == "" { opt = "release"; }
+    list(string) cflags = resolve_cflags(opt, target);
+
     if silent == false { print(bold("Building ") + bold_slate(p.name) + "..."); }
 
     LoadedModule entry = load_entry(p);
@@ -124,7 +141,7 @@ void cmd_build(list(string) args, bool silent) {
     save_manifest(cache_dir, manifest);
 
     string runtime_dir = home() + "/.slate/deps/runtime/";
-    list(string) compiled_objs = build_compile(to_c_paths, to_mod_names, to_mod_paths, cache_dir, runtime_dir, silent);
+    list(string) compiled_objs = build_compile(to_c_paths, to_mod_names, to_mod_paths, cache_dir, runtime_dir, silent, cflags);
 
     mutable int oi = 0;
     while oi < compiled_objs.len() {
@@ -132,7 +149,15 @@ void cmd_build(list(string) args, bool silent) {
         oi = oi + 1;
     }
 
-    if build_link(obj_paths, bin_path) {
+    mutable list(string) link_flags = empty;
+    mutable int lfi = 0;
+    while lfi < cflags.len() {
+        if cflags.get(lfi) == "-g" {
+            link_flags = link_flags.add("-g");
+        }
+        lfi = lfi + 1;
+    }
+    if build_link(obj_paths, bin_path, link_flags) {
         if silent == false { print(bold_green("built") + " " + bin_path + " ✓"); }
     }
 }

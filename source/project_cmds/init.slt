@@ -19,7 +19,7 @@ void cmd_init(list(string) args) {
 
     run("mkdir", "-p", "source");
     file("source/main.slt").write("void main() {\n    print(\"hello from " + name + "!\");\n}\n");
-    file("slate.toml").write("[project]\nname = \"" + name + "\"\nversion = \"0.1.0\"\ndescription = \"\"\nentry = \"source/main.slt\"\n");
+    file("slate.toml").write("[project]\nname = \"" + name + "\"\nversion = \"0.1.0\"\ndescription = \"\"\nentry = \"source/main.slt\"\n\n[build]\nbin = \"" + name + "\"\n");
     file(".gitignore").write("builds/\n.DS_Store\n");
     run("git", "init");
 
