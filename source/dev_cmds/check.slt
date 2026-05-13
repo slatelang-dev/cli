@@ -5,7 +5,7 @@ use compiler;
 use analyse;
 
 void cmd_check_workspace(bool is_bare, bool debug_resolution) {
-    string source_dir = "source";
+    mutable string source_dir = "source";
     if file("slate.toml").exists() {
         Project p = load_project(file("slate.toml").read());
         if p.entry != "" {
