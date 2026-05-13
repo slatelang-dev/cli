@@ -5,13 +5,13 @@ use compiler;
 use build_manifest;
 use build_pipeline;
 
-void cmd_build(list(string) args, bool silent) {
+bool cmd_build(list(string) args, bool silent) {
     Project p = load_project(file("slate.toml").read());
 
     if project_valid(p) == false {
         err("invalid or missing slate.toml");
         print("make sure your slate.toml has a name and entry field");
-        return;
+        return false;
     }
 
     mutable string opt = p.opt;
@@ -37,7 +37,7 @@ void cmd_build(list(string) args, bool silent) {
 
     if entry.success == false {
         err(entry.error);
-        return;
+        return false;
     }
 
     string out_dir = "builds/";
@@ -159,5 +159,7 @@ void cmd_build(list(string) args, bool silent) {
     }
     if build_link(obj_paths, bin_path, link_flags) {
         if silent == false { done("built " + bin_path); }
+        return true;
     }
+    return false;
 }

@@ -54,10 +54,7 @@ void cmd_run(list(string) args) {
     string bin_path = "builds/" + p.bin;
     run("rm", "-f", bin_path);
 
-    cmd_build(empty, true);
-
-    if file(bin_path).exists() == false {
-        err("build failed");
+    if cmd_build(empty, true) == false {
         return;
     }
 
