@@ -4,14 +4,73 @@ use slate;
 use compiler;
 use analyse;
 
+void cmd_check_workspace(bool is_bare, bool debug_resolution) {
+    string source_dir = "source";
+    if file("slate.toml").exists() {
+        Project p = load_project(file("slate.toml").read());
+        if p.entry != "" {
+            string entry_parent = resolve_parent(p.entry);
+            if entry_parent != "" { source_dir = entry_parent; }
+        }
+    }
+
+    string found = run("find", source_dir, "-name", "*.slt").trim();
+    if found == "" {
+        warn("no .slt files found in " + source_dir);
+        return;
+    }
+
+    list(string) files = found.split("\n");
+    mutable int total = 0;
+    mutable int error_files = 0;
+    mutable int warning_files = 0;
+    mutable int clean_files = 0;
+    mutable int i = 0;
+
+    while i < files.len() {
+        string f = files.get(i).trim();
+        if f != "" {
+            total = total + 1;
+            if file(f).exists() {
+                AnalysisResult ar = analyse_source(f, is_bare, debug_resolution);
+                string source = file(f).read();
+                if ar.errors.len() > 0 {
+                    error_files = error_files + 1;
+                    print(bold_slate(f));
+                    print(render_errors(ar.errors, source));
+                } else if ar.warnings.len() > 0 {
+                    warning_files = warning_files + 1;
+                    print(bold_slate(f));
+                    print(render_warnings(ar.warnings, source));
+                } else {
+                    clean_files = clean_files + 1;
+                }
+            }
+        }
+        i = i + 1;
+    }
+
+    print("");
+    if error_files > 0 {
+        print(bold_red(string(error_files) + " file(s) with errors"));
+    }
+    if warning_files > 0 {
+        print(bold_yellow(string(warning_files) + " file(s) with warnings"));
+    }
+    print(bold_green(string(clean_files) + "/" + string(total) + " files clean"));
+}
+
 void cmd_check(list(string) args) {
     mutable string path = "";
     mutable bool debug_resolution = false;
+    mutable bool workspace = false;
     mutable int ai = 1;
     while ai < args.len() {
         string arg = args.get(ai);
         if arg == "--debug-resolution" {
             debug_resolution = true;
+        } else if arg == "--workspace" or arg == "--all" {
+            workspace = true;
         } else if path == "" {
             path = arg;
         }
@@ -22,13 +81,18 @@ void cmd_check(list(string) args) {
     if file("slate.toml").exists() {
         Project p = load_project(file("slate.toml").read());
         is_bare = p.bare;
-        if path == "" {
+        if path == "" and workspace == false {
             if project_valid(p) == false {
                 err("invalid slate.toml — missing name or entry");
                 return;
             }
             path = p.entry;
         }
+    }
+
+    if workspace {
+        cmd_check_workspace(is_bare, debug_resolution);
+        return;
     }
 
     if path.starts_with("../") or path.starts_with("./") {
@@ -39,6 +103,7 @@ void cmd_check(list(string) args) {
     if path == "" {
         print("slate check: no file given.");
         print("usage: slate check [--debug-resolution] <file>");
+        print("       slate check --workspace");
         return;
     }
 
@@ -57,7 +122,6 @@ void cmd_check(list(string) args) {
     }
 
     mutable AnalysisResult ar = analyse_source(path, is_bare, debug_resolution);
-
     string source = file(path).read();
     string output = render_all(ar.errors, ar.warnings, source);
     if output.len() > 0 {
