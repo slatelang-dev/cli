@@ -10,25 +10,26 @@ list(string) resolve_cflags(string opt, string target) {
         flags = flags.add("-g");
     } else if opt == "release-fast" {
         flags = flags.add("-O3");
-        flags = flags.add("-march=native");
     } else {
         flags = flags.add("-O2");
-        if target != "" {
-            if target == "x86-64-v3" { flags = flags.add("-march=x86-64-v3"); }
-            else if target == "x86-64-v4" { flags = flags.add("-march=x86-64-v4"); }
-            else if target == "znver3" { flags = flags.add("-march=znver3"); }
-            else if target == "znver4" { flags = flags.add("-march=znver4"); }
-            else if target == "znver5" { flags = flags.add("-march=znver5"); }
-            else if target == "native" { flags = flags.add("-march=native"); }
-            else if target == "aarch64" {
-                flags = flags.add("--target");
-                flags = flags.add("aarch64-linux-gnu");
-            }
-            else if target == "riscv64" {
-                flags = flags.add("--target");
-                flags = flags.add("riscv64-linux-gnu");
-            }
+    }
+    if target != "" {
+        if target == "x86-64-v3" { flags = flags.add("-march=x86-64-v3"); }
+        else if target == "x86-64-v4" { flags = flags.add("-march=x86-64-v4"); }
+        else if target == "znver3" { flags = flags.add("-march=znver3"); }
+        else if target == "znver4" { flags = flags.add("-march=znver4"); }
+        else if target == "znver5" { flags = flags.add("-march=znver5"); }
+        else if target == "native" { flags = flags.add("-march=native"); }
+        else if target == "aarch64" {
+            flags = flags.add("--target");
+            flags = flags.add("aarch64-linux-gnu");
         }
+        else if target == "riscv64" {
+            flags = flags.add("--target");
+            flags = flags.add("riscv64-linux-gnu");
+        }
+    } else if opt == "release-fast" {
+        flags = flags.add("-march=native");
     }
     return flags;
 }
