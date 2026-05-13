@@ -13,6 +13,11 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
         visited_key = normalize_path(run("pwd").trim() + "/" + path);
     }
 
+    if file(path).exists() == false {
+        err("file not found: " + bold_slate(path));
+        return analysis_ok();
+    }
+
     string source = file(path).read();
     ParseResult result = parse(source);
     if result.success == false {
