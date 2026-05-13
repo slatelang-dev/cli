@@ -51,6 +51,11 @@ void cmd_check(list(string) args) {
         }
     }
 
+    if file(path).exists() == false {
+        err("file not found: " + bold_slate(path));
+        return;
+    }
+
     mutable AnalysisResult ar = analyse_source(path, is_bare, debug_resolution);
 
     string source = file(path).read();
