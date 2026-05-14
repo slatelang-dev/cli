@@ -47,7 +47,7 @@ void cmd_run(list(string) args) {
     }
 
     if has_project == false {
-        print(green("✓") + " no errors");
+        done("no errors");
         return;
     }
 

@@ -10,7 +10,7 @@ bool cmd_build(list(string) args, bool silent) {
 
     if project_valid(p) == false {
         err("invalid or missing slate.toml");
-        print("make sure your slate.toml has a name and entry field");
+        hint("make sure your slate.toml has a name and entry field");
         return false;
     }
 

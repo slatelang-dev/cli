@@ -19,7 +19,7 @@ void cmd_sync(list(string) args) {
     string toml = file("slate.toml").read();
 
     if toml.contains("[deps]") == false {
-        print("no dependencies found in slate.toml");
+        info("no dependencies found in slate.toml");
         return;
     }
 
@@ -77,12 +77,12 @@ void cmd_sync(list(string) args) {
     }
 
     if found_any == false {
-        print("no dependencies found");
+        info("no dependencies found");
         return;
     }
 
     if synced == 0 {
-        print("all dependencies up to date");
+        info("all dependencies up to date");
         return;
     }
 
