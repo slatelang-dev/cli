@@ -12,8 +12,11 @@ void cmd_help(list(string) args) {
             return;
         }
         if topic == "check" {
-            print(bold("slate check") + " — parse and type check a file");
+            print(bold("slate check") + " — parse and type check a file(s)");
             print("usage: slate check <file>");
+            print("       slate check --workspace");
+            print("flags:");
+            print("  --workspace, --all   check all .slt files in the project");
             return;
         }
         if topic == "build" {
@@ -113,7 +116,7 @@ void cmd_help(list(string) args) {
     print("");
     print(bold("development:"));
     print("  run <file>       run a Slate file");
-    print("  check <file>     parse and type check");
+    print("  check [file]     parse and type check");
     print("  build            compile to native binary");
     print("  test <file>      run #T test annotations");
     print("  debug <file>     run with debug output");

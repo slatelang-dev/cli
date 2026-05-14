@@ -7,7 +7,7 @@ Usage: `slate <command> [args]`
 | Command | Description |
 |---------|-------------|
 | `run` | Execute a Slate file |
-| `check` | Type-check without running |
+| `check` | Type-check a file (or `--workspace` to check all files) |
 | `build` | Compile to native binary |
 | `new` / `init` | Scaffold a new project |
 | `add` / `remove` / `sync` | Dependency management |
