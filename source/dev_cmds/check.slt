@@ -4,14 +4,18 @@ use slate;
 use compiler;
 use analyse;
 
-void cmd_check_workspace(bool is_bare, bool debug_resolution) {
+void cmd_check_workspace(bool debug_resolution) {
+    if file("slate.toml").exists() == false {
+        info("no slate.toml found — run from a project directory");
+        return;
+    }
+
+    Project p = load_project(file("slate.toml").read());
+    bool workspace_bare = p.bare;
     mutable string source_dir = ".";
-    if file("slate.toml").exists() {
-        Project p = load_project(file("slate.toml").read());
-        if p.entry != "" {
-            string entry_parent = resolve_parent(p.entry);
-            if entry_parent != "" { source_dir = entry_parent; }
-        }
+    if p.entry != "" {
+        string entry_parent = resolve_parent(p.entry);
+        if entry_parent != "" { source_dir = entry_parent; }
     }
 
     string found = run("find", source_dir, "-name", "*.slt").trim();
@@ -32,7 +36,7 @@ void cmd_check_workspace(bool is_bare, bool debug_resolution) {
         if f != "" {
             total = total + 1;
             if file(f).exists() {
-                AnalysisResult ar = analyse_source(f, is_bare, debug_resolution);
+                AnalysisResult ar = analyse_source(f, workspace_bare, debug_resolution);
                 string source = file(f).read();
                 if ar.errors.len() > 0 {
                     error_files = error_files + 1;
@@ -91,7 +95,7 @@ void cmd_check(list(string) args) {
     }
 
     if workspace {
-        cmd_check_workspace(is_bare, debug_resolution);
+        cmd_check_workspace(debug_resolution);
         return;
     }
 
