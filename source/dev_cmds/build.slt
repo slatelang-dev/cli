@@ -14,6 +14,10 @@ bool cmd_build(list(string) args, bool silent) {
         return false;
     }
 
+    if p.toolchain_version != "" and p.toolchain_version != compiler_version() {
+        warn("project expects compiler v" + p.toolchain_version);
+    }
+
     mutable string opt = p.opt;
     mutable string target = p.target;
     mutable int ai = 1;
