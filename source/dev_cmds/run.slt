@@ -65,5 +65,6 @@ void cmd_run(list(string) args) {
         run_args = run_args.add(args.get(ai));
         ai += 1;
     }
-    exec(run_args);
+    # exec(run_args);
+    print("exec would run: " + bin_path);
 }
