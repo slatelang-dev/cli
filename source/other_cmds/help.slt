@@ -9,6 +9,10 @@ void cmd_help(list(string) args) {
         if topic == "run" {
             print(bold("slate run") + " — run a Slate file");
             print("usage: slate run <file>");
+            print("       slate run <file> -- <args>");
+            print("flags:");
+            print("  --verbose   per-file progress output");
+            print("  --quiet     errors and results only");
             return;
         }
         if topic == "check" {
@@ -22,6 +26,13 @@ void cmd_help(list(string) args) {
         if topic == "build" {
             print(bold("slate build") + " — compile to a native binary");
             print("usage: slate build");
+            print("flags:");
+            print("  --verbose            per-file progress output");
+            print("  --quiet              errors and results only");
+            print("  --debug              build with debug info");
+            print("  --release            optimized release build (default)");
+            print("  --release-fast       aggressively optimized");
+            print("  --target <arch>      cross-compile target");
             return;
         }
         if topic == "test" {
