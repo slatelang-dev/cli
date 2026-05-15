@@ -129,7 +129,7 @@ list(string) build_compile(list(string) to_c_paths, list(string) to_mod_names, l
         ci = ci + 1;
     }
     if verbosity == "normal" and compile_count > 0 {
-        write("\r  compiled " + string(compile_count) + "/" + string(total) + "\n");
+        write("\r  compiled " + string(compile_count) + "/" + string(total) + "       \n");
     }
     return obj_paths;
 }
