@@ -5,7 +5,7 @@ use compiler;
 use build_manifest;
 use build_pipeline;
 
-bool cmd_build(list(string) args, string verbosity) {
+bool cmd_build(list(string) args, bool silent) {
     Project p = load_project(file("slate.toml").read());
 
     if project_valid(p) == false {
@@ -20,15 +20,12 @@ bool cmd_build(list(string) args, string verbosity) {
 
     mutable string opt = p.opt;
     mutable string target = p.target;
-    mutable string vb = verbosity;
     mutable int ai = 1;
     while ai < args.len() {
         string a = args.get(ai);
         if a == "--debug" { opt = "debug"; }
         else if a == "--release" { opt = "release"; }
         else if a == "--release-fast" { opt = "release-fast"; }
-        else if a == "--verbose" { vb = "verbose"; }
-        else if a == "--quiet" { vb = "quiet"; }
         else if a == "--target" {
             ai = ai + 1;
             if ai < args.len() { target = args.get(ai); }
@@ -38,7 +35,7 @@ bool cmd_build(list(string) args, string verbosity) {
     if opt == "" { opt = "release"; }
     list(string) cflags = resolve_cflags(opt, target);
 
-    if vb != "quiet" { print(bold("Building ") + bold_slate(p.name) + "..."); }
+    if silent == false { print(bold("Building ") + bold_slate(p.name) + "..."); }
 
     LoadedModule entry = load_entry(p);
 
@@ -69,7 +66,7 @@ bool cmd_build(list(string) args, string verbosity) {
     if entry_already_found == false {
         stubs = stubs.add(ModuleStub(name: p.name, path: p.entry));
     }
-    if vb != "quiet" { print(gray("  modules discovered ✓")); }
+    if silent == false { print(gray("  modules discovered ✓")); }
 
     mutable list(LoadedModule) modules = load_modules(stubs);
 
@@ -95,7 +92,6 @@ bool cmd_build(list(string) args, string verbosity) {
     mutable list(string) to_mod_names = empty;
     mutable list(string) to_mod_paths = empty;
     mutable list(string) to_hashes = empty;
-    mutable int emit_count = 0;
 
     list(LoadedModule) ordered = reverse_modules(modules);
 
@@ -129,24 +125,16 @@ bool cmd_build(list(string) args, string verbosity) {
                 c_code = emit_source(parsed, reg);
             }
             if c_code.len() > 0 {
-                if vb == "verbose" { print(gray("  emitting " + mod_name + " ✓")); }
+                if silent == false { print(gray("  emitting " + mod_name + " ✓")); }
                 file(c_path).write(c_code);
                 to_c_paths = to_c_paths.add(c_path);
                 to_mod_names = to_mod_names.add(mod_name);
                 to_mod_paths = to_mod_paths.add(mod_path);
                 to_hashes = to_hashes.add(source_hash);
-                emit_count = emit_count + 1;
-                if vb == "normal" {
-                    write("\r  emitting... " + string(emit_count) + "/" + string(ordered.len()));
-                }
             }
         }
 
         i = i + 1;
-    }
-
-    if vb == "normal" and emit_count > 0 {
-        write("\r  emitted " + string(emit_count) + "/" + string(ordered.len()) + "\n");
     }
 
     mutable int mi = 0;
@@ -157,7 +145,7 @@ bool cmd_build(list(string) args, string verbosity) {
     save_manifest(cache_dir, manifest);
 
     string runtime_dir = home() + "/.slate/deps/runtime/";
-    list(string) compiled_objs = build_compile(to_c_paths, to_mod_names, to_mod_paths, cache_dir, runtime_dir, vb, cflags);
+    list(string) compiled_objs = build_compile(to_c_paths, to_mod_names, to_mod_paths, cache_dir, runtime_dir, silent, cflags);
 
     mutable int oi = 0;
     while oi < compiled_objs.len() {
@@ -174,7 +162,7 @@ bool cmd_build(list(string) args, string verbosity) {
         lfi = lfi + 1;
     }
     if build_link(obj_paths, bin_path, link_flags) {
-        if vb != "quiet" { done("built " + bin_path); }
+        if silent == false { done("built " + bin_path); }
         return true;
     }
     return false;

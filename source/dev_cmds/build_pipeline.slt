@@ -89,10 +89,8 @@ void build_emit_headers(list(LoadedModule) ordered, table(string, Node) parsed_a
     }
 }
 
-list(string) build_compile(list(string) to_c_paths, list(string) to_mod_names, list(string) to_mod_paths, string cache_dir, string runtime_dir, string verbosity, list(string) cflags) {
+list(string) build_compile(list(string) to_c_paths, list(string) to_mod_names, list(string) to_mod_paths, string cache_dir, string runtime_dir, bool silent, list(string) cflags) {
     mutable list(string) obj_paths = empty;
-    mutable int compile_count = 0;
-    mutable int total = to_c_paths.len();
     mutable int ci = 0;
     while ci < to_c_paths.len() {
         string c_path = to_c_paths.get(ci);
@@ -120,16 +118,9 @@ list(string) build_compile(list(string) to_c_paths, list(string) to_mod_names, l
             return obj_paths;
         } else {
             obj_paths = obj_paths.add(obj_path);
-            compile_count = compile_count + 1;
-            if verbosity == "verbose" { print(gray("  compiling " + mod_name + " ✓")); }
-            if verbosity == "normal" {
-                write("\r  compiling... " + string(compile_count) + "/" + string(total));
-            }
+            if silent == false { print(gray("  compiling " + mod_name + " ✓")); }
         }
         ci = ci + 1;
-    }
-    if verbosity == "normal" and compile_count > 0 {
-        write("\r  compiled " + string(compile_count) + "/" + string(total) + "\n");
     }
     return obj_paths;
 }
