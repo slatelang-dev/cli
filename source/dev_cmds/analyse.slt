@@ -36,13 +36,13 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
                 Node return_type = decl.children.get(0);
                 if return_type.value == "ptr" {
                     Span sp = make_span(path, decl.line, decl.col, decl.value.len());
-                    AnalysisError err = make_error(
+                    AnalysisError parse_err = make_error(
                         ErrorKind.InvalidUse,
                         "ptr type requires bare mode",
                         "Add bare = true to your slate.toml to use ptr",
                         sp
                     );
-                    ar = AnalysisResult(errors: ar.errors.add(err), warnings: ar.warnings);
+                    ar = AnalysisResult(errors: ar.errors.add(parse_err), warnings: ar.warnings);
                 }
             }
             ar = merge_analysis(ar, analyse_fn(decl, path, scope));
