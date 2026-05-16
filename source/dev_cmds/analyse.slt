@@ -25,7 +25,7 @@ AnalysisResult analyse_source(string path, bool is_bare, bool debug_resolution) 
     mutable Scope scope = seed_builtins(new_scope());
     scope = register_transitive(result.node, base_path, scope, visited, debug_resolution);
     scope = push_scope(scope);
-    scope = register_module_symbols(result.node, scope);
+    scope = register_module_symbols(result.node, scope, path);
 
     mutable AnalysisResult ar = analysis_ok();
     mutable int j = 0;
