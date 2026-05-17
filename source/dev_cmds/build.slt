@@ -146,7 +146,7 @@ bool cmd_build(list(string) args, string verbosity) {
     }
 
     if vb == "normal" and emit_count > 0 {
-        write("\r  emitted " + string(emit_count) + "/" + string(ordered.len()) + "       \n");
+        write("  emitted " + string(emit_count) + "/" + string(ordered.len()) + "       \n");
     }
 
     mutable int mi = 0;
