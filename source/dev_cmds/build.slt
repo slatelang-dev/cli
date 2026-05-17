@@ -137,7 +137,7 @@ bool cmd_build(list(string) args, string verbosity) {
                 to_hashes = to_hashes.add(source_hash);
                 emit_count = emit_count + 1;
                 if vb == "normal" {
-                    write("\r  emitting... " + string(emit_count) + "/" + string(ordered.len()));
+                    write("  emitting... " + string(emit_count) + "/" + string(ordered.len()));
                 }
             }
         }
