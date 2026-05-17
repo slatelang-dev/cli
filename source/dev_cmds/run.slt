@@ -117,7 +117,7 @@ void cmd_run(list(string) args) {
             exec_args = exec_args.add(args.get(ai));
             ai += 1;
         }
-        exec(exec_args);
+        # exec(exec_args);
         return;
     }
 
@@ -135,5 +135,5 @@ void cmd_run(list(string) args) {
         run_args = run_args.add(args.get(ai));
         ai += 1;
     }
-    exec(run_args);
+    # exec(run_args);
 }
